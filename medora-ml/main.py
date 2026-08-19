@@ -5,33 +5,35 @@ import joblib
 import re
 import os
 
-app = FastAPI(title="MEDORA ML API", description="API untuk deteksi klaim kesehatan", version="1.0")
+app = FastAPI(title="MEDORA ML API", description="API untuk Claim Analyzer & Evidence Classifier", version="2.0")
 
-# Setup CORS biar frontend React (Vite) bisa nembak API ini tanpa diblokir
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Saat production, ganti dengan URL frontend lu
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 1. LOAD MODEL & TF-IDF
-# Pastikan path-nya sesuai dengan letak folder models lu
-MODEL_PATH = os.path.join("models", "medora_model_logreg_ultimate.joblib")
-TFIDF_PATH = os.path.join("models", "medora_tfidf_ultimate.joblib")
+PATH_ML1_MODEL = os.path.join("models", "medora_model_logreg_ultimate.joblib")
+PATH_ML1_TFIDF = os.path.join("models", "medora_tfidf_ultimate.joblib")
 
+PATH_ML2_MODEL = os.path.join("models", "medora_model_ml2_v2.joblib")
+PATH_ML2_TFIDF = os.path.join("models", "medora_tfidf_ml2_v2.joblib")
+
+print("Memuat mesin ML ke dalam server...")
 try:
-    print("Loading models...")
-    model = joblib.load(MODEL_PATH)
-    tfidf = joblib.load(TFIDF_PATH)
-    print("Models loaded successfully! 🚀")
+    
+    model_ml1 = joblib.load(PATH_ML1_MODEL)
+    tfidf_ml1 = joblib.load(PATH_ML1_TFIDF)
+   
+    model_ml2 = joblib.load(PATH_ML2_MODEL)
+    tfidf_ml2 = joblib.load(PATH_ML2_TFIDF)
+    print("dua ml berhasil dimuat")
 except Exception as e:
     print(f"Error loading models: {e}")
-    model = None
-    tfidf = None
+    model_ml1, tfidf_ml1, model_ml2, tfidf_ml2 = None, None, None, None
 
-# 2. FUNGSI PEMBERSIH TEKS (Wajib sama persis dengan yang di Colab!)
 stopwords_indo = ['yang', 'di', 'ke', 'dari', 'dan', 'atau', 'dengan', 'bahwa', 'untuk', 'pada', 'adalah', 'ini', 'itu', 'dalam', 'sebuah', 'oleh', 'akan']
 
 def bersihin_teks(teks: str) -> str:
@@ -40,40 +42,50 @@ def bersihin_teks(teks: str) -> str:
     kata_bersih = [k for k in teks.split() if k not in stopwords_indo]
     return ' '.join(kata_bersih)
 
-# 3. SCHEMA REQUEST DARI FRONTEND
 class ClaimRequest(BaseModel):
     teks_klaim: str
 
-# 4. ENDPOINT PREDIKSI
+class EvidenceRequest(BaseModel):
+    teks_klaim: str
+    teks_evidence: str
+
 @app.post("/api/predict")
 async def predict_claim(request: ClaimRequest):
-    if model is None or tfidf is None:
-        raise HTTPException(status_code=500, detail="Model ML belum siap di server.")
+    if not model_ml1 or not tfidf_ml1:
+        raise HTTPException(status_code=500, detail="Model ML #1 belum siap.")
     
-    if not request.teks_klaim.strip():
-        raise HTTPException(status_code=400, detail="Teks klaim tidak boleh kosong.")
-
-    # Bersihkan teks input user
     teks_bersih = bersihin_teks(request.teks_klaim)
+    vektor_teks = tfidf_ml1.transform([teks_bersih])
     
-    # Ubah ke bentuk TF-IDF
-    vektor_teks = tfidf.transform([teks_bersih])
-    
-    # Lakukan prediksi (true / false)
-    prediksi = model.predict(vektor_teks)[0]
-    
-    # Hitung seberapa yakin modelnya (Confidence / Probability)
-    probabilitas = model.predict_proba(vektor_teks)[0]
-    confidence = max(probabilitas) * 100
+    prediksi = model_ml1.predict(vektor_teks)[0]
+    confidence = max(model_ml1.predict_proba(vektor_teks)[0]) * 100
 
     return {
         "teks_asli": request.teks_klaim,
-        "teks_bersih": teks_bersih,
-        "prediksi": prediksi, # Output: 'true' atau 'false'
-        "confidence": round(confidence, 2) # Contoh: 80.66
+        "prediksi": prediksi,
+        "confidence": round(confidence, 2)
     }
 
-# Endpoint buat ngecek API nyala atau mati
+@app.post("/api/check-evidence")
+async def check_evidence(request: EvidenceRequest):
+    if not model_ml2 or not tfidf_ml2:
+        raise HTTPException(status_code=500, detail="Model ML #2 belum siap.")
+
+    claim_bersih = bersihin_teks(request.teks_klaim)
+    evidence_bersih = bersihin_teks(request.teks_evidence)
+
+    teks_gabungan = f"klaim {claim_bersih} bukti {evidence_bersih}"
+    
+    vektor_teks = tfidf_ml2.transform([teks_gabungan])
+
+    prediksi_label = model_ml2.predict(vektor_teks)[0]
+    
+    return {
+        "claim": request.teks_klaim,
+        "evidence": request.teks_evidence,
+        "hubungan": prediksi_label
+    }
+
 @app.get("/")
 async def root():
-    return {"message": "MEDORA ML Engine is running! ⚡"}
+    return {"message": "MEDORA is online"}
