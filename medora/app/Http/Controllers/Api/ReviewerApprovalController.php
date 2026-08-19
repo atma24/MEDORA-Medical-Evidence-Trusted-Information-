@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\Admin;
+namespace App\Http\Controllers\Api;
 
 use App\Enums\Role;
 use App\Enums\ReviewerStatus;
