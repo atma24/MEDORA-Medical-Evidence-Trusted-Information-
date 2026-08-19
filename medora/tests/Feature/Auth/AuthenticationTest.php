@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Enums\ReviewerStatus;
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -10,45 +12,53 @@ class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_screen_can_be_rendered(): void
-    {
-        $response = $this->get('/login');
-
-        $response->assertStatus(200);
-    }
-
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_users_can_authenticate_using_the_login_endpoint(): void
     {
         $user = User::factory()->create();
 
-        $response = $this->post('/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertOk()
+            ->assertJsonStructure(['token', 'user' => ['id', 'name', 'email', 'role']]);
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();
 
-        $this->post('/login', [
+        $this->postJson('/api/v1/auth/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
-        ]);
-
-        $this->assertGuest();
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('email');
     }
 
-    public function test_users_can_logout(): void
+    public function test_pending_reviewers_can_not_login(): void
+    {
+        $user = User::factory()->create([
+            'role' => Role::REVIEWER,
+            'status' => ReviewerStatus::PENDING,
+        ]);
+
+        $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('email');
+    }
+
+    public function test_authenticated_users_can_logout(): void
     {
         $user = User::factory()->create();
+        $token = $user->createToken('api')->plainTextToken;
 
-        $response = $this->actingAs($user)->post('/logout');
+        $this->withToken($token)
+            ->postJson('/api/v1/auth/logout')
+            ->assertOk();
 
-        $this->assertGuest();
-        $response->assertRedirect('/');
+        $this->assertDatabaseMissing('personal_access_tokens', ['tokenable_id' => $user->id]);
     }
 }

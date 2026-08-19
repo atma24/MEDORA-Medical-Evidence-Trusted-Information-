@@ -2,34 +2,41 @@
 
 namespace App\Models;
 
+use App\Enums\ReviewerStatus;
 use App\Enums\Role;
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
+#[Fillable(['name', 'email', 'password', 'role', 'provider', 'provider_id', 'avatar', 'str_number', 'speciality_id', 'status'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => Role::class,
+            'status' => ReviewerStatus::class,
         ];
+    }
+
+    public function speciality(): BelongsTo
+    {
+        return $this->belongsTo(Speciality::class);
+    }
+
+    public function claims(): HasMany
+    {
+        return $this->hasMany(Claim::class);
     }
 
     public function hasRole(Role $role): bool
