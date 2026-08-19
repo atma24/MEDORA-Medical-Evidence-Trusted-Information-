@@ -14,6 +14,8 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', fn () => Inertia::render('Dashboard'))->name('dashboard');
-Route::get('/review', fn () => Inertia::render('Dashboard'))->name('review.index');
-Route::get('/admin', fn () => Inertia::render('Dashboard'))->name('admin.index');
+Route::get('/history', fn () => Inertia::render('History'))->name('history.index');
+Route::get('/hasil-claim', fn () => Inertia::render('HasilClaim'))->name('hasil-claim.index');
+Route::get('/review', fn () => Inertia::render('ClaimApprove'))->name('review.index');
+Route::get('/admin', fn () => Inertia::render('ClaimApprove'))->name('admin.index');
 Route::get('/profile', fn () => Inertia::render('Profile/Edit'))->name('profile.edit');

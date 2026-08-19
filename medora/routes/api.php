@@ -38,6 +38,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::delete('/profile', [ProfileController::class, 'destroy']);
 
+    // ==============================
+    // Reviewer Routes
+    // ==============================
+    Route::middleware('role:REVIEWER')->group(function () {
+        // Claim Review Routes
+        Route::get('/claims/review-queue', [ClaimController::class, 'reviewQueue']);
+        Route::post('/claims/{claim}/review', [ClaimController::class, 'review']);
+    });
+
     // Claims Routes
     Route::get('/claims', [ClaimController::class, 'index']);
     Route::post('/claims', [ClaimController::class, 'store']);
@@ -47,13 +56,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==============================
     // Admin Routes
     // ==============================
-    Route::middleware('role:REVIEWER')->group(function () {
+    Route::middleware('role:ADMIN')->group(function () {
         // Reviewer Approval Routes
         Route::get('/reviewers', [ReviewerApprovalController::class, 'index']);
         Route::post('/reviewers/{user}/approve', [ReviewerApprovalController::class, 'approve']);
         Route::post('/reviewers/{user}/reject', [ReviewerApprovalController::class, 'reject']);
-    });
-    Route::middleware('role:ADMIN')->group(function () {
+
         // Speciality Routes
         Route::get('/specialities', [SpecialityController::class, 'index']);
         Route::post('/specialities', [SpecialityController::class, 'store']);

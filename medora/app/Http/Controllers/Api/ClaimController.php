@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ClaimStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\AnalyzeClaimJob;
 use App\Models\Claim;
@@ -46,5 +47,37 @@ class ClaimController extends Controller
         $claim->delete();
 
         return response()->json(['message' => 'Klaim dihapus.']);
+    }
+
+    public function reviewQueue(): JsonResponse
+    {
+        return response()->json(
+            Claim::where('status', ClaimStatus::ANALYZED)
+                ->with('user:id,name')
+                ->orderBy('created_at')
+                ->get()
+        );
+    }
+
+    public function review(Request $request, Claim $claim): JsonResponse
+    {
+        $request->validate([
+            'decision' => ['required', 'in:is_claim,is_not_claim'],
+            'note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        abort_unless($claim->status === ClaimStatus::ANALYZED, 422, 'Klaim belum siap direview.');
+
+        $claim->update([
+            'is_claim' => $request->decision === 'is_claim',
+            'status' => ClaimStatus::REVIEWED,
+            'reviewed_by' => $request->user()->id,
+            'review_note' => $request->note,
+        ]);
+
+        return response()->json([
+            'message' => 'Review klaim berhasil disimpan.',
+            'claim' => $claim->refresh(),
+        ]);
     }
 }
