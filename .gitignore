@@ -55,7 +55,10 @@ auth.json
 /medora-ml/**/*.pyc
 
 # Cache model fastembed — di-download otomatis saat setup (besar, >200MB)
-/medora-ml/models/fastembed/
+# Bisa muncul di root repo ATAU di medora-ml, tergantung working directory saat dijalankan
+**/models/fastembed/
+models/fastembed/
 
 # Embedding cache — di-generate otomatis oleh train_ml2.py / encode_dataset.py
+**/models/embedded/
 /medora-ml/models/embedded/
