@@ -30,3 +30,32 @@ Homestead.json
 .env.production
 .phpactor.json
 auth.json
+
+# ==============================
+# medora-be (Laravel Backend)
+# ==============================
+/medora_be/vendor/
+/medora_be/node_modules/
+/medora_be/.env
+
+# ==============================
+# medora-fe (Next.js Frontend)
+# ==============================
+/medora_fe/node_modules/
+/medora_fe/.next/
+/medora_fe/out/
+
+# ==============================
+# medora-ml (Python ML Service)
+# ==============================
+/medora-ml/venv/
+/medora-ml/__pycache__/
+/medora-ml/**/__pycache__/
+/medora-ml/*.pyc
+/medora-ml/**/*.pyc
+
+# Cache model fastembed — di-download otomatis saat setup (besar, >200MB)
+/medora-ml/models/fastembed/
+
+# Embedding cache — di-generate otomatis oleh train_ml2.py / encode_dataset.py
+/medora-ml/models/embedded/
