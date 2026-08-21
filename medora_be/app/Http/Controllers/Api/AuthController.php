@@ -100,14 +100,20 @@ class AuthController extends Controller
 
     public function googleRedirect(): JsonResponse
     {
+        /** @var \Laravel\Socialite\Two\GoogleProvider $provider */
+        $provider = Socialite::driver('google');
+
         return response()->json([
-            'url' => Socialite::driver('google')->stateless()->redirect()->getTargetUrl(),
+            'url' => $provider->stateless()->redirect()->getTargetUrl(),
         ]);
     }
 
     public function googleCallback(): JsonResponse
     {
-        $googleUser = Socialite::driver('google')->stateless()->user();
+        /** @var \Laravel\Socialite\Two\GoogleProvider $provider */
+        $provider = Socialite::driver('google');
+
+        $googleUser = $provider->stateless()->user();
 
         $user = User::where('email', $googleUser->getEmail())->first();
 
