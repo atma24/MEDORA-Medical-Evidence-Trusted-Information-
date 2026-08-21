@@ -56,7 +56,7 @@ Folder project berisi 3 sub-folder:
 ```
 MEDORA/
 ├── medora_be/     # Backend Laravel
-├── medora_ml/     # ML Service Python
+├── medora-ml/     # ML Service Python
 └── medora_fe/     # Frontend Next.js
 ```
 
@@ -149,14 +149,14 @@ Seeder membuat:
 
 ---
 
-## 5. Setup ML Service (medora_ml)
+## 5. Setup ML Service (medora-ml)
 
 Ini bagian yang paling penting soal `fastembed`.
 
 ### 5.1 Buat virtual environment Python
 
 ```bash
-cd medora_ml
+cd medora-ml
 
 # Buat venv bernama "venv"
 python -m venv venv
@@ -185,14 +185,16 @@ pip install -r requirements.txt
 Model ML hasil training (`.joblib`) yang berukuran kecil (< 1 MB) sudah di-commit ke
 Git dan ter-download saat clone. **Tidak perlu di-training ulang.**
 
-Pastikan file berikut ada di `medora_ml/models/`:
+Pastikan file berikut ada di `medora-ml/models/`:
 
 ```
 models/
 ├── medora_model_logreg_ultimate.joblib    # ML1: Claim Analyzer
 ├── medora_tfidf_ultimate.joblib           # ML1: TF-IDF
-├── medora_model_ml2_gabungan.joblib       # ML2: Trust Engine
-├── medora_tfidf_ml2_gabungan.joblib       # ML2: TF-IDF
+├── medora_category_model.joblib           # ML1: Klasifikasi kategori
+├── medora_category_tfidf.joblib           # ML1: TF-IDF kategori
+├── medora_model_ml2_gabungan.joblib       # ML2: TF-IDF fallback
+├── medora_tfidf_ml2_gabungan.joblib       # ML2: TF-IDF fallback
 └── ml2_embedding.joblib                   # ML2: embedding
 ```
 
@@ -200,13 +202,13 @@ models/
 
 Model embedding `fastembed` (~240 MB) **TIDAK di-commit** ke Git karena terlalu besar.
 Sebaliknya, saat service pertama kali dijalankan, `fastembed` akan **mengunduh sendiri**
-model dari HuggingFace ke folder `medora_ml/models/fastembed/`.
+model dari HuggingFace ke folder `medora-ml/models/fastembed/`.
 
 Cara memicu download (pilih salah satu):
 
 **Cara A — Langsung jalankan service** (paling mudah):
 ```bash
-# Dari folder medora_ml, dengan venv aktif
+# Dari folder medora-ml, dengan venv aktif
 start.bat
 ```
 Pada proses start, akan terlihat log mengunduh model. Tunggu sampai muncul
@@ -218,18 +220,26 @@ python -c "from fastembed import TextEmbedding; TextEmbedding(model_name='senten
 ```
 
 > **Butuh internet** untuk download ini. Setelah selesai, folder
-> `medora_ml/models/fastembed/` akan berisi file model (~240 MB) dan TIDAK perlu
+> `medora-ml/models/fastembed/` akan berisi file model (~240 MB) dan TIDAK perlu
 > diunduh lagi (tersimpan lokal di `models/fastembed/`).
 
 ### 5.5 (Opsional) Ulang training ML
 Jika ingin melatih ulang model dengan dataset sendiri:
 
 ```bash
-python encode_dataset.py      # encode dataset -> models/embedded/
-python train_ml2.py           # train ML2 -> .joblib
+# ML#1 — Claim Analyzer (butuh data mentah SciFact/CoAID di datasets/)
+python prepare_dataset_ml1.py   # bangun ml1_dataset.csv
+python train_ml1.py             # train ML1 -> .joblib
+
+# ML#2 — Evidence Relationship Classifier
+python prepare_dataset_ml2.py   # bangun dataset gabungan
+python encode_dataset.py        # encode dataset -> models/embedded/
+python train_ml2.py             # train ML2 -> .joblib
 ```
 
-> Proses ini juga memakai `fastembed` dan menghasilkan `models/embedded/`.
+> Proses ML#2 juga memakai `fastembed` dan menghasilkan `models/embedded/`.
+> Semua model `.joblib` yang sudah di-commit sudah siap pakai — training ulang
+> hanya dilakukan bila ingin mengubah dataset/parameter.
 
 ---
 
@@ -272,7 +282,7 @@ php artisan queue:work
 
 **Terminal 3 — ML Service (port 8001):**
 ```bash
-cd medora_ml
+cd medora-ml
 venv\Scripts\activate
 start.bat
 ```
@@ -326,15 +336,15 @@ php artisan test
 
 ---
 
-## Struktur .gitignore (medora_ml)
+## Struktur .gitignore (medora-ml)
 
 File yang **TIDAK** di-commit (otomatis dibuat di laptop masing-masing):
 
 ```
-medora_ml/venv/                  # Virtual environment Python
-medora_ml/__pycache__/           # Cache bytecode Python
-medora_ml/models/fastembed/      # Model fastembed (~240MB, auto-download)
-medora_ml/models/embedded/       # Hasil encode dataset (bisa di-reproduksi)
+medora-ml/venv/                  # Virtual environment Python
+medora-ml/__pycache__/           # Cache bytecode Python
+medora-ml/models/fastembed/      # Model fastembed (~240MB, auto-download)
+medora-ml/models/embedded/       # Hasil encode dataset (bisa di-reproduksi)
 ```
 
 Model `.joblib` kecil yang dibutuhkan runtime TETAP di-commit supaya laptop lain
