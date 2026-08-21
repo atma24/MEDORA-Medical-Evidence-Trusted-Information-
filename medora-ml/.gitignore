@@ -1,0 +1,8 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# Dataset mentah (besar, diunduh via prepare_dataset_ml1.py)
+datasets/

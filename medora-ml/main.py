@@ -9,6 +9,7 @@ from query_generator import generate_query, istilah_untuk_ranking
 from evidence_retriever import retrieve
 from evidence_ranking import rank_evidences
 from trust_engine import hitung_assessment, _map_ml2_label
+from claim_structure import extract_structure
 
 app = FastAPI(title="MEDORA ML API", description="API untuk Claim Analyzer & Evidence Classifier", version="2.0")
 
@@ -23,6 +24,9 @@ app.add_middleware(
 PATH_ML1_MODEL = os.path.join("models", "medora_model_logreg_ultimate.joblib")
 PATH_ML1_TFIDF = os.path.join("models", "medora_tfidf_ultimate.joblib")
 
+PATH_CATEGORY_MODEL = os.path.join("models", "medora_category_model.joblib")
+PATH_CATEGORY_TFIDF = os.path.join("models", "medora_category_tfidf.joblib")
+
 PATH_ML2_MODEL = os.path.join("models", "medora_model_ml2_gabungan.joblib")
 PATH_ML2_TFIDF = os.path.join("models", "medora_tfidf_ml2_gabungan.joblib")
 
@@ -32,6 +36,7 @@ PATH_FASTEMBED_CACHE = os.path.join("models", "fastembed")
 
 print("Memuat mesin ML ke dalam server...")
 model_ml1, tfidf_ml1 = None, None
+model_category, tfidf_category = None, None
 model_ml2, tfidf_ml2 = None, None
 model_ml2_emb, labels_ml2_emb, embedder = None, None, None
 
@@ -41,6 +46,13 @@ try:
     print("ML1 (Claim Analyzer) dimuat.")
 except Exception as e:
     print(f"Error loading ML1: {e}")
+
+try:
+    model_category = joblib.load(PATH_CATEGORY_MODEL)
+    tfidf_category = joblib.load(PATH_CATEGORY_TFIDF)
+    print("ML1-Category dimuat.")
+except Exception as e:
+    print(f"Error loading ML1-Category: {e}")
 
 try:
     model_ml2 = joblib.load(PATH_ML2_MODEL)
@@ -142,12 +154,25 @@ async def predict_claim(request: ClaimRequest):
     teks_bersih = bersihin_teks(request.teks_klaim)
     vektor_teks = tfidf_ml1.transform([teks_bersih])
     
-    prediksi = model_ml1.predict(vektor_teks)[0]
-    confidence = max(model_ml1.predict_proba(vektor_teks)[0]) * 100
+    prediksi = int(model_ml1.predict(vektor_teks)[0])  # 0=not_claim, 1=claim
+    confidence = float(max(model_ml1.predict_proba(vektor_teks)[0]) * 100)
+    is_claim = bool(prediksi)
+
+    category = "OTHER"
+    if model_category is not None and tfidf_category is not None:
+        vektor_cat = tfidf_category.transform([teks_bersih])
+        category = str(model_category.predict(vektor_cat)[0])
+
+    struktur = extract_structure(request.teks_klaim)
 
     return {
         "teks_asli": request.teks_klaim,
         "prediksi": prediksi,
+        "is_claim": is_claim,
+        "category": category,
+        "subject": struktur["subject"],
+        "object": struktur["object"],
+        "relation": struktur["relation"],
         "confidence": round(confidence, 2)
     }
 
@@ -178,12 +203,26 @@ async def analyze_claim(request: ClaimRequest):
     # --- Langkah 1: ML1 (Claim Analyzer) ---
     teks_bersih = bersihin_teks(teks)
     vektor_ml1 = tfidf_ml1.transform([teks_bersih])
-    prediksi_ml1 = model_ml1.predict(vektor_ml1)[0]
-    confidence_ml1 = max(model_ml1.predict_proba(vektor_ml1)[0]) * 100
+    prediksi_ml1 = int(model_ml1.predict(vektor_ml1)[0])
+    confidence_ml1 = float(max(model_ml1.predict_proba(vektor_ml1)[0]) * 100)
+    is_claim = bool(prediksi_ml1)
+
+    # Kategori via model category (bila tersedia)
+    category = "OTHER"
+    if model_category is not None and tfidf_category is not None:
+        vektor_cat = tfidf_category.transform([teks_bersih])
+        category = str(model_category.predict(vektor_cat)[0])
+
+    # Struktur klaim (rule-based)
+    struktur = extract_structure(teks)
 
     analysis = {
         "teks_asli": teks,
-        "is_claim": str(prediksi_ml1).lower() == 'true',
+        "is_claim": is_claim,
+        "category": category,
+        "subject": struktur["subject"],
+        "object": struktur["object"],
+        "relation": struktur["relation"],
         "confidence": round(confidence_ml1, 2),
     }
 
