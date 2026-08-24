@@ -10,6 +10,7 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -108,7 +109,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function googleCallback(): JsonResponse
+    public function googleCallback(): JsonResponse|RedirectResponse
     {
         /** @var \Laravel\Socialite\Two\GoogleProvider $provider */
         $provider = Socialite::driver('google');
@@ -143,11 +144,12 @@ class AuthController extends Controller
 
         $user->tokens()->delete();
         $token = $user->createToken('google')->plainTextToken;
+        $userData = $user->fresh()->load('speciality');
 
-        return response()->json([
-            'token' => $token,
-            'user' => $user->fresh()->load('speciality'),
-        ]);
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+        $redirectUrl = "{$frontendUrl}/auth/callback?token=" . urlencode($token) . "&user=" . urlencode(json_encode($userData));
+
+        return redirect()->away($redirectUrl);
     }
 
     public function me(Request $request): JsonResponse

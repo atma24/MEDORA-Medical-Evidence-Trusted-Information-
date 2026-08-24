@@ -12,8 +12,10 @@ const api = axios.create({
 // Request Interceptor: Otomatis nambahin Token ke setiap request (kalau udah login)
 api.interceptors.request.use(
     (config) => {
-        // Nanti tokennya bisa disesuaikan pengambilannya dari Zustand/localStorage
-        const token = typeof window !== 'undefined' ? localStorage.getItem('medora_token') : null;
+        // Baca token dari localStorage (Remember Me) atau sessionStorage (tanpa Remember Me)
+        const token = typeof window !== 'undefined'
+            ? (localStorage.getItem('medora_token') || sessionStorage.getItem('medora_token'))
+            : null;
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -35,6 +37,8 @@ api.interceptors.response.use(
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('medora_token');
                 localStorage.removeItem('medora_user');
+                sessionStorage.removeItem('medora_token');
+                sessionStorage.removeItem('medora_user');
                 window.location.href = '/login'; 
             }
         }
