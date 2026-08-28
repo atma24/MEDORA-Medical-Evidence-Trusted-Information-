@@ -81,20 +81,24 @@ export default function LoginUI() {
             
             const { token, user } = response.data;
 
-            // Logika Remember Me (bersihkan storage lawan agar tidak duplikat)
+            // Logika Remember Me & Simpan Role (bersihkan storage lawan agar tidak duplikat)
             if (data.remember_me) {
                 localStorage.setItem('medora_token', token);
                 localStorage.setItem('medora_user', JSON.stringify(user));
+                localStorage.setItem('medora_role', user.role); // <--- INJEKSI ROLE
                 sessionStorage.removeItem('medora_token');
                 sessionStorage.removeItem('medora_user');
+                sessionStorage.removeItem('medora_role');
             } else {
                 sessionStorage.setItem('medora_token', token);
                 sessionStorage.setItem('medora_user', JSON.stringify(user));
+                sessionStorage.setItem('medora_role', user.role); // <--- INJEKSI ROLE
                 localStorage.removeItem('medora_token');
                 localStorage.removeItem('medora_user');
+                localStorage.removeItem('medora_role');
             }
 
-            // Redirect ke Dashboard setelah sukses
+            // Redirect seragam ke Dashboard (Nanti AppLayout yang atur menu berdasarkan Role)
             router.push('/dashboard');
 
         } catch (error: any) {

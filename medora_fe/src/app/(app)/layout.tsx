@@ -1,16 +1,43 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
-export default function UserLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  
+  // State untuk menyimpan data User/Role
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userData, setUserData] = useState<any>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
   const pathname = usePathname();
   const router = useRouter();
 
-  const isActive = (path: string) => pathname === path || pathname.includes(path);
+  // INJEKSI LOGIKA BACA ROLE & PROTEKSI ROUTE
+  useEffect(() => {
+    const token = localStorage.getItem('medora_token') || sessionStorage.getItem('medora_token');
+    const role = localStorage.getItem('medora_role') || sessionStorage.getItem('medora_role');
+    const userStr = localStorage.getItem('medora_user') || sessionStorage.getItem('medora_user');
+
+    if (!token) {
+      router.push('/login');
+    } else {
+      setUserRole(role);
+      if (userStr) setUserData(JSON.parse(userStr));
+      setIsAuthLoading(false);
+    }
+  }, [router]);
+
+  // Logika active state (termasuk saat Reviewer masuk ke halaman Verifikasi)
+  const isActive = (path: string) => {
+    if (path === '/antrean-klaim' && pathname.includes('/verifikasi')) {
+      return true;
+    }
+    return pathname === path || pathname.includes(`${path}/`);
+  };
 
   const getMenuClass = (path: string) => {
     const baseClass = `flex items-center px-4 py-3 text-sm font-medium rounded-lg transition group`;
@@ -20,10 +47,24 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     return `${baseClass} ${isActive(path) ? activeClass : inactiveClass} ${collapseClass}`;
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('medora_token');
+    localStorage.removeItem('medora_user');
+    localStorage.removeItem('medora_role');
+    sessionStorage.clear();
+    setIsLogoutModalOpen(false);
+    router.push('/login');
+  };
+
+  // Render layar putih/loading sebentar sebelum mengecek Role biar UI tidak berkedip
+  if (isAuthLoading) {
+    return <div className="h-screen w-screen bg-[#F8FAFC] flex items-center justify-center">Memuat...</div>;
+  }
+
   return (
     <div className="flex h-screen bg-[#F8FAFC] font-sans text-slate-800 overflow-hidden relative">
       
-      {/* ================= SIDEBAR USER ================= */}
+      {/* ================= SIDEBAR DINAMIS ================= */}
       <aside 
         className={`bg-white border-r border-gray-200 flex flex-col justify-between transition-all duration-300 ease-in-out shrink-0 z-20 ${
           isSidebarOpen ? 'w-64' : 'w-20'
@@ -48,21 +89,38 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
             {isSidebarOpen && <p className="text-xs font-bold text-gray-400 mb-4 px-4 tracking-wider">MENU UTAMA</p>}
             <nav className="space-y-1.5">
               
-              <Link href="/user/dashboard" className={getMenuClass('/user/dashboard')}>
-                <svg className={`w-5 h-5 shrink-0 ${isActive('/user/dashboard') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+              <Link href="/dashboard" className={getMenuClass('/dashboard')}>
+                <svg className={`w-5 h-5 shrink-0 ${isActive('/dashboard') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                 {isSidebarOpen && <span className="ml-3">Dashboard</span>}
               </Link>
 
-              {/* INI MENU KLAIM BARU YANG HILANG */}
-              <Link href="/user/klaim-baru" className={getMenuClass('/user/klaim-baru')}>
-                <svg className={`w-5 h-5 shrink-0 ${isActive('/user/klaim-baru') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                {isSidebarOpen && <span className="ml-3">Klaim Baru</span>}
-              </Link>
-              
-              <Link href="/user/riwayat-klaim" className={getMenuClass('/user/riwayat-klaim')}>
-                <svg className={`w-5 h-5 shrink-0 ${isActive('/user/riwayat-klaim') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                {isSidebarOpen && <span className="ml-3">Riwayat Klaim</span>}
-              </Link>
+              {/* TAMPILKAN MENU REVIEWER JIKA ROLE === 'reviewer' */}
+              {userRole === 'reviewer' && (
+                <>
+                  <Link href="/antrean-klaim" className={getMenuClass('/antrean-klaim')}>
+                    <svg className={`w-5 h-5 shrink-0 ${isActive('/antrean-klaim') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    {isSidebarOpen && <span className="ml-3">Antrean Klaim</span>}
+                  </Link>
+                  <Link href="/laporan" className={getMenuClass('/laporan')}>
+                    <svg className={`w-5 h-5 shrink-0 ${isActive('/laporan') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    {isSidebarOpen && <span className="ml-3">Laporan</span>}
+                  </Link>
+                </>
+              )}
+
+              {/* TAMPILKAN MENU USER AWAM JIKA ROLE !== 'reviewer' */}
+              {userRole !== 'reviewer' && (
+                <>
+                  <Link href="/klaim-baru" className={getMenuClass('/klaim-baru')}>
+                    <svg className={`w-5 h-5 shrink-0 ${isActive('/klaim-baru') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    {isSidebarOpen && <span className="ml-3">Klaim Baru</span>}
+                  </Link>
+                  <Link href="/riwayat-klaim" className={getMenuClass('/riwayat-klaim')}>
+                    <svg className={`w-5 h-5 shrink-0 ${isActive('/riwayat-klaim') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    {isSidebarOpen && <span className="ml-3">Riwayat Klaim</span>}
+                  </Link>
+                </>
+              )}
               
             </nav>
           </div>
@@ -72,8 +130,8 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           <div className="px-3 mb-6">
             {isSidebarOpen && <p className="text-xs font-bold text-gray-400 mb-4 px-4 tracking-wider">AKUN</p>}
             <nav className="space-y-1.5">
-              <Link href="/user/pengaturan-akun" className={getMenuClass('/user/pengaturan-akun')}>
-                <svg className={`w-5 h-5 shrink-0 ${isActive('/user/pengaturan-akun') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <Link href="/pengaturan-akun" className={getMenuClass('/pengaturan-akun')}>
+                <svg className={`w-5 h-5 shrink-0 ${isActive('/pengaturan-akun') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 {isSidebarOpen && <span className="ml-3">Pengaturan</span>}
               </Link>
               <button 
@@ -116,11 +174,13 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
             </button>
             <div className="flex items-center space-x-3 text-right">
               <div>
-                <p className="text-sm font-bold text-gray-800">Ceca</p>
-                <p className="text-xs text-gray-500">ceca@gmail.com</p>
+                {/* NAMA & EMAIL DINAMIS */}
+                <p className="text-sm font-bold text-gray-800">{userData?.name || 'User'}</p>
+                <p className="text-xs text-gray-500">{userData?.email || 'email@domain.com'}</p>
               </div>
-              <div className="w-10 h-10 bg-[#1E3A8A] text-white font-bold rounded-full flex items-center justify-center overflow-hidden shadow-sm">
-                 C
+              <div className="w-10 h-10 bg-[#1E3A8A] text-white font-bold rounded-full flex items-center justify-center overflow-hidden shadow-sm uppercase">
+                 {/* INISIAL DINAMIS */}
+                 {userData?.name ? userData.name.charAt(0) : 'U'}
               </div>
             </div>
           </div>
@@ -145,7 +205,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
             <p className="text-[14.5px] text-gray-500 mb-8 px-2 leading-relaxed">Apakah Anda yakin ingin keluar dari akun MEDORA Anda?</p>
             <div className="flex w-full space-x-3">
               <button onClick={() => setIsLogoutModalOpen(false)} className="flex-1 py-3 bg-white border border-gray-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-gray-50 transition shadow-sm">Batal</button>
-              <button onClick={() => { setIsLogoutModalOpen(false); router.push('/login'); }} className="flex-1 py-3 bg-[#FFE5E5] text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition shadow-sm">Ya, Keluar</button>
+              <button onClick={handleLogout} className="flex-1 py-3 bg-[#FFE5E5] text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition shadow-sm">Ya, Keluar</button>
             </div>
           </div>
         </div>

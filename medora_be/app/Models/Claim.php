@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'relation',
     'object',
     'ml_confidence',
+    'detail',
     'status',
     'reviewed_by',
     'review_note',
