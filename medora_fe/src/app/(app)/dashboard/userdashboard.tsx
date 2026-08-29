@@ -8,11 +8,12 @@ import {
   IconTervalidasiStatus, IconKeliruStatus, IconTinjauanStatus
 } from '@/components/Icons';
 
-// Tipe data berdasarkan backend
+// Tipe data disesuaikan dengan penambahan kolom 'detail' di backend
 interface Claim {
   id: number;
   created_at: string;
-  text: string;
+  text: string;   // Ini menampung Topik
+  detail: string; // Ini menampung Detail
   status: string;
   review_verdict: string | null;
 }

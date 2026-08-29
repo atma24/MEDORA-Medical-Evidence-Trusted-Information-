@@ -45,7 +45,11 @@ class ClaimController extends Controller
 
     public function show(Request $request, Claim $claim): JsonResponse
     {
-        abort_unless($request->user()->id === $claim->user_id, 403);
+        abort_unless(
+            $request->user()->id === $claim->user_id || $request->user()->role === \App\Enums\Role::REVIEWER, 
+            403,
+            'Anda tidak memiliki akses ke klaim ini.'
+        );
 
         return response()->json(
             $claim->load([

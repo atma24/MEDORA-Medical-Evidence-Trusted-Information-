@@ -30,6 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail']);
+    
+    // --- ROUTE BARU: Update Profile ---
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+    
     Route::put('/password', [AuthController::class, 'updatePassword']);
     Route::delete('/profile', [AuthController::class, 'destroyAccount']);
 

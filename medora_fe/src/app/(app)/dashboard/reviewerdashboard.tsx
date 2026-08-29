@@ -7,10 +7,12 @@ import {
   IconTervalidasiStatus, IconKeliruStatus, IconTinjauanStatus 
 } from '@/components/Icons';
 
+// Interface disesuaikan dengan penambahan kolom 'detail' di backend
 interface Claim {
   id: number;
   created_at: string;
-  text: string;
+  text: string;   // Ini menyimpan Topik
+  detail: string; // Ini menyimpan Detail
   status: string;
 }
 

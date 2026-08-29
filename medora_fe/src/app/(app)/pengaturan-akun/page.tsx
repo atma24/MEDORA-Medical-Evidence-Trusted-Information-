@@ -21,7 +21,7 @@ export default function PengaturanAkunSwitcher() {
   }
 
   // Render halaman sesuai Role
-  if (role === 'reviewer') {
+  if (role === 'REVIEWER') {
     return <ReviewerSetting />;
   }
 
