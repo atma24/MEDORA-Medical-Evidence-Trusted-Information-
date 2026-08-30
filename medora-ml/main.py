@@ -27,8 +27,8 @@ PATH_ML1_TFIDF = os.path.join("models", "medora_tfidf_ultimate.joblib")
 PATH_CATEGORY_MODEL = os.path.join("models", "medora_category_model.joblib")
 PATH_CATEGORY_TFIDF = os.path.join("models", "medora_category_tfidf.joblib")
 
-PATH_ML2_MODEL = os.path.join("models", "medora_model_ml2_gabungan.joblib")
-PATH_ML2_TFIDF = os.path.join("models", "medora_tfidf_ml2_gabungan.joblib")
+PATH_ML2_MODEL = os.path.join("models", "medora_model_ml2_serving_format_classifier.joblib")
+PATH_ML2_TFIDF = os.path.join("models", "medora_model_ml2_serving_format_tfidf.joblib")
 
 # ML2 embedding (fastembed + LogisticRegression)
 PATH_ML2_EMBEDDING = os.path.join("models", "ml2_embedding.joblib")
@@ -123,14 +123,18 @@ def _ml2_predict_tfidf(teks_klaim, teks_evidence):
     return _map_ml2_label(label_ml2), _ml2_confidence(model_ml2, vektor_teks)
 
 def _ml2_predict(teks_klaim, teks_evidence):
-    """Pilih ML2 embedding bila tersedia, fallback ke TF-IDF."""
+    """Prioritas: TF-IDF (baru dilatih), fallback ke embedding."""
+    # Prioritas TF-IDF (model baru hasil retraining, 75% CV accuracy)
+    if model_ml2 is not None and tfidf_ml2 is not None:
+        try:
+            return _ml2_predict_tfidf(teks_klaim, teks_evidence)
+        except Exception as e:
+            print(f"TF-IDF ML2 error, fallback embedding: {e}")
     if model_ml2_emb is not None and embedder is not None:
         try:
             return _ml2_predict_embedding(teks_klaim, teks_evidence)
         except Exception as e:
-            print(f"Embedding ML2 error, fallback TF-IDF: {e}")
-    if model_ml2 is not None and tfidf_ml2 is not None:
-        return _ml2_predict_tfidf(teks_klaim, teks_evidence)
+            print(f"Embedding ML2 error: {e}")
     return None, None
 
 def bersihin_teks(teks: str) -> str:
@@ -253,7 +257,7 @@ async def analyze_claim(request: ClaimRequest):
 
     # --- Langkah 5: ML2 (Evidence Classifier) per evidence ---
     for ev in ranked:
-        teks_ev = ev.get('title', '') + ' ' + ev.get('abstract', '')
+        teks_ev = (ev.get('title') or '') + ' ' + (ev.get('abstract') or '')
         label_ml2, conf_ml2 = _ml2_predict(teks, teks_ev)
         ev["relationship"] = label_ml2
         ev["confidence"] = conf_ml2

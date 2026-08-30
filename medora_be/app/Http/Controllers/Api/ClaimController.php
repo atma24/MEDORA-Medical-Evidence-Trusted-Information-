@@ -23,27 +23,33 @@ class ClaimController extends Controller
     }
 
     public function store(Request $request): JsonResponse
-    {
-        $request->validate([
-            'text' => ['required', 'string', 'max:5000'],
-        ]);
+{
+    $request->validate([
+        'text' => ['required', 'string', 'max:255'], // Ini Topiknya
+        'detail' => ['required', 'string', 'max:5000'], // Ini Detailnya
+    ]);
 
-        $claim = $request->user()->claims()->create([
-            'text' => $request->text,
-            'status' => ClaimStatus::PENDING,
-        ]);
+    $claim = $request->user()->claims()->create([
+        'text' => $request->text,
+        'detail' => $request->detail,
+        'status' => ClaimStatus::PENDING,
+    ]);
 
-        AnalyzeClaimJob::dispatch($claim);
+    AnalyzeClaimJob::dispatch($claim);
 
-        return response()->json([
-            'message' => 'Klaim sedang dianalisis.',
-            'claim' => $claim,
-        ], 201);
-    }
+    return response()->json([
+        'message' => 'Klaim sedang dianalisis.',
+        'claim' => $claim,
+    ], 201);
+}
 
     public function show(Request $request, Claim $claim): JsonResponse
     {
-        abort_unless($request->user()->id === $claim->user_id, 403);
+        abort_unless(
+            $request->user()->id === $claim->user_id || $request->user()->role === \App\Enums\Role::REVIEWER, 
+            403,
+            'Anda tidak memiliki akses ke klaim ini.'
+        );
 
         return response()->json(
             $claim->load([

@@ -217,6 +217,17 @@ export default function RegisterUI() {
         }
     };
 
+    const handleGoogleAuth = async () => {
+        try {
+            const response = await api.get('/auth/google');
+            if (response.data && response.data.url) {
+                window.location.href = response.data.url;
+            }
+        } catch (error) {
+            setBackendError('Gagal menghubungkan dengan Google. Coba lagi nanti.');
+        }
+    };
+
     const handleReviewerSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -236,7 +247,7 @@ export default function RegisterUI() {
                 password_confirmation: data.password_confirmation,
                 role: 'REVIEWER',
                 str_number: data.str_number,
-                speciality_id: data.speciality_id
+                speciality_id: Number(data.speciality_id)
             });
             
             setIsReviewerModalOpen(false);
@@ -330,7 +341,11 @@ export default function RegisterUI() {
                             Masukkan detail Anda untuk mendaftar.
                         </p>
 
-                        <button className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 font-semibold py-2.5 px-4 rounded-xl hover:bg-gray-50 transition mb-5 shadow-sm text-[12.5px]">
+                        <button 
+                            type="button"
+                            onClick={handleGoogleAuth}
+                            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 font-semibold py-2.5 px-4 rounded-xl hover:bg-gray-50 transition mb-5 shadow-sm text-[12.5px]"
+                        >
                             <svg className="w-4 h-4" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -556,14 +571,12 @@ export default function RegisterUI() {
                                         required
                                     >
                                         <option value="" disabled>Pilih Bidang Keahlian</option>
-                                        <option value="1">Dokter Umum</option>
-                                        <option value="2">Spesialis Penyakit Dalam</option>
-                                        <option value="3">Spesialis Anak</option>
-                                        <option value="4">Spesialis Kandungan (Obgyn)</option>
-                                        <option value="5">Spesialis Bedah</option>
-                                        <option value="6">Spesialis Saraf (Neurologi)</option>
-                                        <option value="7">Spesialis Kulit dan Kelamin</option>
-                                        <option value="8">Spesialis Mata</option>
+                                        <option value="1">Kedokteran Umum</option>
+                                        <option value="2">Penyakit Dalam</option>
+                                        <option value="3">Bedah</option>
+                                        <option value="4">Pediatri (Spesialis Anak)</option>
+                                        <option value="5">Obstetri & Ginekologi (Obgyn)</option>
+                                        <option value="6">Kedokteran Gigi</option>
                                     </select>
                                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
