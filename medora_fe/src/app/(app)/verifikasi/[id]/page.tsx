@@ -3,11 +3,66 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { AxiosError } from 'axios';
 import api from '@/lib/api';
 import { 
   IconPetir, IconDokumenInfo, IconFormulir, 
   IconCeklisBesar, IconInfoBesar, IconSilangBesar, IconUpload 
 } from '@/components/Icons';
+
+// Types
+interface ClaimData {
+  id: number;
+  user_id: number;
+  text: string;
+  detail: string;
+  is_claim: boolean;
+  category?: string | null;
+  subject?: string | null;
+  relation?: string | null;
+  object?: string | null;
+  ml_confidence?: number | null;
+  status: string;
+  reviewed_by?: number | null;
+  review_note?: string | null;
+  review_verdict?: string | null;
+  created_at: string;
+  updated_at: string;
+  trust_assessment?: {
+    evidence_strength: number;
+    trust_score: number;
+    supporting_count: number;
+    contradicting_count: number;
+    neutral_count: number;
+    insufficient_count: number;
+    assessment: string;
+  };
+  claim_evidences: {
+    id: number;
+    relationship: string;
+    relevance_score: number | null;
+    confidence: number | null;
+    evidence: {
+      id: number;
+      pmid?: string;
+      doi?: string;
+      title: string;
+      abstract?: string;
+      authors?: string;
+      publication_year?: number;
+      url?: string;
+      evidence_level?: string;
+      source: {
+        name: string;
+        year?: number;
+        volume?: string;
+        issue?: string;
+        pages?: string;
+      };
+    };
+    review_status?: string;
+  }[];
+}
 
 export default function RuangVerifikasiPage() {
   const params = useParams();
@@ -15,7 +70,7 @@ export default function RuangVerifikasiPage() {
   const id = params?.id as string;
   
   // State untuk Data Klaim dari Backend
-  const [claim, setClaim] = useState<any>(null);
+  const [claim, setClaim] = useState<ClaimData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -34,6 +89,11 @@ export default function RuangVerifikasiPage() {
       try {
         const response = await api.get(`/claims/${id}`); 
         setClaim(response.data);
+        
+        // Pre-fill form dengan review note jika sudah ada
+        if (response.data.review_note) {
+          setPenjelasan(response.data.review_note);
+        }
       } catch (error) {
         console.error("Gagal mengambil detail klaim:", error);
         setErrorMsg("Gagal memuat data klaim atau Anda tidak memiliki akses.");
@@ -80,9 +140,10 @@ export default function RuangVerifikasiPage() {
       
       alert("Tinjauan berhasil dipublikasikan!");
       router.push('/antrean-klaim');
-    } catch (error: any) {
+    } catch (error) {
       console.error("Gagal menyimpan:", error);
-      alert(error.response?.data?.message || "Terjadi kesalahan saat menyimpan tinjauan.");
+      const axiosError = error as AxiosError<{ message?: string }>;
+      alert(axiosError?.response?.data?.message || "Terjadi kesalahan saat menyimpan tinjauan.");
     } finally {
       setIsSaving(false);
     }
@@ -94,6 +155,92 @@ export default function RuangVerifikasiPage() {
     return new Date(dateString).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
+  // Helper: Badge status sesuai enum
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return { color: 'gray', label: 'Menunggu Analisis', class: 'bg-gray-100 text-gray-600 border-gray-200' };
+      case 'ANALYZED':
+        return { color: 'blue', label: 'Analisis Selesai', class: 'bg-blue-100 text-blue-700 border-blue-200' };
+      case 'REVIEW_NEEDED':
+        return { color: 'amber', label: 'Menunggu Review Ahli', class: 'bg-amber-100 text-amber-700 border-amber-200' };
+      case 'REVIEWED':
+        const verdict = claim?.review_verdict === 'FACT' ? 'Tervalidasi' : 'Keliru';
+        const vClass = claim?.review_verdict === 'FACT' 
+          ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+          : 'bg-red-100 text-red-700 border-red-200';
+        return { color: 'emerald/red', label: verdict, class: vClass };
+      case 'FAILED':
+        return { color: 'red', label: 'Analisis Gagal', class: 'bg-red-100 text-red-700 border-red-200' };
+      default:
+        return { color: 'gray', label: status, class: 'bg-gray-100 text-gray-600 border-gray-200' };
+    }
+  };
+
+  // Helper: Display result based on trust assessment analysis
+  const getAnalysisResult = (status: string): string => {
+    if (status === 'PENDING') {
+      return 'Sistem AI sedang menganalisis klaim ini.';
+    }
+    
+    if (status === 'FAILED') {
+      return 'Proses analisis gagal. Silakan coba lagi.';
+    }
+    
+    // Untuk ANALYZED dan REVIEW_NEEDED
+    const assessment = claim?.trust_assessment?.assessment;
+    if (!assessment) {
+      return 'Tidak ada hasil analisis tersedia.';
+    }
+    
+    // Map assessment ke bahasa Indonesia yang lebih friendly
+    switch (assessment.toLowerCase()) {
+      case 'fact':
+      case 'supported':
+        return 'Klaim didukung oleh literatur medis yang relevan dan terpercaya.';
+      case 'hoax':
+      case 'contradicted':
+        return 'Klaim bertentangan dengan bukti-bukti medis yang tersedia.';
+      case 'neutral':
+      case 'mixed':
+        return 'Hasil analisis beragam — beberapa mendukung, beberapa tidak.';
+      default:
+        return assessment;
+    }
+  };
+
+  // Helper: Average relevance & confidence dari semua evidences (nilai ML = 0-1 untuk relevance, 0-100 untuk confidence)
+  const getAvgScores = () => {
+    if (!claim?.claim_evidences || claim.claim_evidences.length === 0) {
+      return { relevance: 0, confidence: 0 };
+    }
+    
+    const relevances = claim.claim_evidences.map(e => e.relevance_score ?? 0);
+    const confidences = claim.claim_evidences.map(e => e.confidence ?? 0);
+    
+    // Normalize to 0-100 based on detected ranges
+    const avgRel = relevances.length > 0 
+      ? (relevances.reduce((a, b) => a + b, 0) / relevances.length * 100)
+      : 0;
+    const avgConf = confidences.length > 0
+      ? confidences.reduce((a, b) => a + b, 0) / confidences.length
+      : 0;
+    
+    // Round and return as numbers for type safety
+    return { 
+      relevance: Math.round(avgRel), 
+      confidence: Math.round(avgConf >= 1 && avgConf <= 100 ? avgConf : avgConf * 100)
+    };
+  };
+
+  // Derivations
+  const statusBadge = getStatusBadge(claim?.status ?? '');
+  const analysisResult = getAnalysisResult(claim?.status ?? 'PENDING');
+  const extractedEntities = claim?.category && claim?.subject && claim?.relation && claim?.object;
+  const { relevance, confidence } = getAvgScores();
+  const ta = claim?.trust_assessment;
+  const totalEvidence = claim?.claim_evidences?.length ?? 0;
+
   if (isLoading) {
     return <div className="h-[60vh] flex items-center justify-center text-slate-500 font-medium tracking-wide">Memuat data klaim...</div>;
   }
@@ -103,6 +250,16 @@ export default function RuangVerifikasiPage() {
       <div className="h-[60vh] flex items-center justify-center">
         <div className="bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-xl font-bold shadow-sm">
           {errorMsg}
+        </div>
+      </div>
+    );
+  }
+
+  if (!claim) {
+    return (
+      <div className="h-[60vh] flex items-center justify-center">
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 px-6 py-4 rounded-xl font-bold shadow-sm">
+          Klaim tidak ditemukan (#CLM-{id})
         </div>
       </div>
     );
@@ -139,7 +296,7 @@ export default function RuangVerifikasiPage() {
         {/* KOLOM KIRI (Info & AI) */}
         <div className="lg:col-span-1 space-y-6">
           
-          {/* Card 1: Hasil Analisis AI */}
+          {/* Card 1: Hasil Analisis AI (DINAMIS) */}
           <div className="bg-[#E6EDF8] rounded-xl p-6 shadow-sm border border-blue-100">
             <div className="flex items-center space-x-2.5 mb-5 text-[#00236F]">
               <IconPetir className="w-4 h-5" />
@@ -148,19 +305,166 @@ export default function RuangVerifikasiPage() {
               </h3>
             </div>
             
+            {/* Status Klaim */}
             <div className="mb-4">
               <p className="text-[12px] text-[#475569] font-semibold mb-2">Tingkat Kemungkinan:</p>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[11.5px] font-bold border border-gray-200">
-                Menunggu Analisis
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11.5px] font-bold border ${statusBadge.class}`}>
+                {statusBadge.label}
               </span>
             </div>
 
-            <div>
-              <p className="text-[12px] text-[#475569] font-semibold mb-1">Ekstraksi Jurnal:</p>
+            {/* Hasil Assessment AI */}
+            <div className="mb-4">
+              <p className="text-[12px] text-[#475569] font-semibold mb-1">Analisis Sistem:</p>
               <p className="text-[13.5px] text-[#334155] leading-relaxed">
-                Sistem AI sedang memproses referensi terkait klaim ini.
+                {analysisResult}
               </p>
             </div>
+
+            {/* Confidence Scores */}
+            <div className="mb-4">
+              <p className="text-[12px] text-[#475569] font-semibold mb-2">Skor Kepercayaan:</p>
+              <div className="space-y-2.5">
+                {ta && (
+                  <div>
+                    <div className="flex justify-between text-[11px] text-slate-600 mb-1">
+                      <span>Trust Score</span>
+                      <span className="font-bold">{ta.trust_score.toFixed(0)}%</span>
+                    </div>
+                    <div className="w-full bg-white rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out"
+                        style={{ width: `${ta.trust_score}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+                
+                {totalEvidence > 0 && (
+                  <>
+                    <div>
+                      <div className="flex justify-between text-[11px] text-slate-600 mb-1">
+                        <span>Relevansi Rata-Rata</span>
+                        <span className="font-bold">{relevance}%</span>
+                      </div>
+                      <div className="w-full bg-white rounded-full h-2 overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all duration-500 ease-out"
+                          style={{ width: `${relevance}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between text-[11px] text-slate-600 mb-1">
+                        <span>Konfidensi Model</span>
+                        <span className="font-bold">{confidence}%</span>
+                      </div>
+                      <div className="w-full bg-white rounded-full h-2 overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-amber-500 to-orange-600 transition-all duration-500 ease-out"
+                          style={{ width: `${confidence}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Evidence Counts dari TrustAssessment */}
+            {ta && (ta.supporting_count > 0 || ta.contradicting_count > 0 || ta.neutral_count > 0 || ta.insufficient_count > 0) && (
+              <div>
+                <p className="text-[12px] text-[#475569] font-semibold mb-2">Rincian Bukti:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {ta.supporting_count > 0 && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
+                      <span className="text-[11px] text-emerald-700 font-bold block mb-1">Supporting</span>
+                      <span className="text-[15px] font-extrabold text-emerald-800">{ta.supporting_count}</span>
+                    </div>
+                  )}
+                  {ta.contradicting_count > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-2.5">
+                      <span className="text-[11px] text-red-700 font-bold block mb-1">Contradicting</span>
+                      <span className="text-[15px] font-extrabold text-red-800">{ta.contradicting_count}</span>
+                    </div>
+                  )}
+                  {ta.neutral_count > 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                      <span className="text-[11px] text-amber-700 font-bold block mb-1">Neutral</span>
+                      <span className="text-[15px] font-extrabold text-amber-800">{ta.neutral_count}</span>
+                    </div>
+                  )}
+                  {ta.insufficient_count > 0 && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
+                      <span className="text-[11px] text-gray-700 font-bold block mb-1">Insufficient</span>
+                      <span className="text-[15px] font-extrabold text-gray-800">{ta.insufficient_count}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Jika ekstraksi entities ada */}
+            {extractedEntities && (
+              <div className="mt-4 pt-4 border-t border-blue-200">
+                <p className="text-[12px] text-[#475569] font-semibold mb-2">Entity Ekstraksi:</p>
+                <div className="space-y-1 text-xs text-slate-600">
+                  {claim.category && (
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-slate-400 font-bold">Category:</span>
+                      <span className="font-semibold text-slate-700">{claim.category}</span>
+                    </div>
+                  )}
+                  {claim.subject && (
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-slate-400 font-bold">Subject:</span>
+                      <span className="font-semibold text-slate-700">{claim.subject}</span>
+                    </div>
+                  )}
+                  {claim.relation && (
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-slate-400 font-bold">Relation:</span>
+                      <span className="font-semibold text-slate-700">{claim.relation}</span>
+                    </div>
+                  )}
+                  {claim.object && (
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-slate-400 font-bold">Object:</span>
+                      <span className="font-semibold text-slate-700">{claim.object}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Evidence list summary */}
+            {totalEvidence > 0 && (
+              <div className="mt-4 pt-4 border-t border-blue-200">
+                <p className="text-[12px] text-[#475569] font-semibold mb-2">Jurnal Terpilih ({totalEvidence}):</p>
+                <div className="space-y-1.5 max-h-40 overflow-y-auto scrollbar-thin">
+                  {claim.claim_evidences.slice(0, 3).map((ce: ClaimData['claim_evidences'][number]) => (
+                    <div key={ce.id} className="text-[11px] text-slate-600 pl-2 border-l-2 border-blue-300">
+                      <div className="font-semibold text-slate-700 line-clamp-2">
+                        {ce.evidence.title}
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        {ce.evidence.source.name}, {ce.evidence.publication_year} • Relevance: {Math.round((ce.relevance_score ?? 0) * 100)}%, Conf: {Math.round(ce.confidence ?? 0)}%
+                      </div>
+                      <div className="text-[10px] text-slate-500 italic mt-0.5 line-clamp-1">
+                        {ce.relationship}: {ce.evidence.abstract?.substring(0, 80)}...
+                      </div>
+                    </div>
+                  ))}
+                  {totalEvidence > 3 && (
+                    <div className="text-[10px] text-blue-600 font-semibold pt-1.5">
+                      +{totalEvidence - 3} jurnal lain...
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* Card 2: Informasi Klaim Dinamis */}

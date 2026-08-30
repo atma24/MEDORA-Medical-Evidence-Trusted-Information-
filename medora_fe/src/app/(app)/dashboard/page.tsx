@@ -9,8 +9,20 @@ export default function DashboardSwitcher() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Ambil role dari localStorage yang disimpan saat login
-    const savedRole = localStorage.getItem('medora_role') || sessionStorage.getItem('medora_role');
+    // Ambil role dari localStorage/sessionStorage dengan fallback ke medora_user JSON
+    let savedRole = localStorage.getItem('medora_role') || sessionStorage.getItem('medora_role');
+    
+    // Fallback: parse role dari medora_user jika tidak ada di storage terpisah
+    if (!savedRole) {
+      const userStr = localStorage.getItem('medora_user') || sessionStorage.getItem('medora_user');
+      if (userStr) {
+        try {
+          const userData = JSON.parse(userStr);
+          savedRole = userData?.role ?? null;
+        } catch { /* ignore parsing error */ }
+      }
+    }
+    
     setRole(savedRole);
     setIsLoading(false);
   }, []);
@@ -19,8 +31,8 @@ export default function DashboardSwitcher() {
     return <div className="flex items-center justify-center h-full text-gray-500 font-medium">Memuat Dashboard...</div>;
   }
 
-  // Render halaman sesuai Role
-  if (role === 'reviewer') {
+  // Render halaman sesuai Role (case-insensitive comparison)
+  if (role?.toUpperCase() === 'REVIEWER') {
     return <ReviewerDashboard />;
   }
 

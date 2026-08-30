@@ -1,12 +1,36 @@
-import re
+﻿import re
 
 STOPWORDS_INDO = {
+    # Kata fungsi umum
     'yang', 'di', 'ke', 'dari', 'dan', 'atau', 'dengan', 'bahwa', 'untuk', 'pada',
     'adalah', 'ini', 'itu', 'dalam', 'sebuah', 'oleh', 'akan', 'tidak', 'juga',
     'dapat', 'bisa', 'harus', 'mungkin', 'apakah', 'bagi', 'sebagai', 'saat',
     'setelah', 'sebelum', 'karena', 'sangat', 'lebih', 'kurang', 'adanya', 'banyak',
-    'tentang', 'terhadap', 'menurut', 'para', 'para', 'kita', 'kami', 'mereka',
-    'anda', 'saya', 'yang', 'menyatakan', 'bahwa', 'seperti', 'pada', 'ke',
+    'tentang', 'terhadap', 'menurut', 'para', 'kita', 'kami', 'mereka',
+    'anda', 'saya', 'menyatakan', 'seperti', 'mencoba', 'coba', 'ingin', 'mau',
+    'para', 'menyatakan', 'bahwa', 'seperti', 'pada', 'ke',
+
+    # Kata waktu/frekuensi (penyebab utama query kotor: "pagi", "mentah")
+    'pagi', 'siang', 'sore', 'malam', 'hari', 'setiap', 'selalu', 'sering',
+    'jarang', 'terus', 'terusmenerus', 'terus-menerus', 'rutin', 'harian',
+    'jam', 'menit', 'detik', 'minggu', 'bulan', 'tahun', 'sehari', 
+
+    # Keadaan fisik / benda umum
+    'mentah', 'matang', 'mati', 'hidup', 'panas', 'dingin', 'basah', 'kering',
+    'cepat', 'lambat', 'besar', 'kecil', 'tinggi', 'rendah', 'berat', 'ringan',
+    'semua', 'sebagian', 'beberapa', 'kebanyakan', 'mayoritas', 'minoritas',
+
+    # Benda organ tubuh & anatomi (bukan istilah medis formal)
+    'tulang', 'sendi', 'otot', 'perut', 'usus', 'ginjal', 'paru-paru', 'paru',
+    'tenggorokan', 'tenggorok', 'kepala', 'leher', 'bahu', 'punggung', 'pinggang',
+    'lengan', 'tangan', 'jari', 'paha', 'lutut', 'kaki', 'tumit',
+
+    # Verba Indonesia yang sering jadi query kotor
+    'membunuh', 'mematikan', 'menewaskan', 'menyembuhkan', 'mengobati', 'mengatasi',
+    'mencegah', 'memicu', 'menimbulkan', 'menyebabkan', 'mengakibatkan',
+    'menggunakan', 'konsumsi', 'mengonsumsi', 'minum', 'meminum', 'makan', 'memakan',
+    'butuh', 'perlunya', 'diperlukan', 'dibutuhkan', 'memerlukan', 'mengandung',
+    'menghasilkan', 'mampu', 'berhasil', 'gagal', 'sukses',
 }
 
 KAMUS_MEDIS = {
@@ -225,6 +249,9 @@ KAMUS_MEDIS = {
     'kanker paru': 'lung cancer',
     'kanker payudara': 'breast cancer',
     'kanker kulit': 'skin cancer',
+    'kanker serviks': 'cervical cancer',
+    'serviks': 'cervix',
+    'leher rahim': 'cervix',
     'tumor ganas': 'malignant tumor',
     'tumor jinak': 'benign tumor',
     'kemoterapi': 'chemotherapy',
@@ -261,6 +288,8 @@ GENERIC_TERMS = {
     'anda', 'semua', 'setiap', 'selalu', 'selama', 'ketika', 'jika', 'maka',
     'tubuh', 'badan', 'risiko', 'resiko', 'berat', 'berupa', 'mempengaruhi',
     'berdampak', 'berpengaruh', 'berhubungan', 'berkaitan', 'berkualitas',
+    'terbukti', 'tepat', 'sesuai', 'benar', 'valid', 'otentik',
+    'asli', 'segar', 'dingin', 'air es', 'air dingin', 'es',
 }
 
 

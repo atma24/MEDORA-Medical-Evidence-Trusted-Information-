@@ -138,7 +138,7 @@ export default function ReviewerDashboard() {
                       </span>
                     </td>
                     <td className="px-6 py-5 text-center">
-                      <Link href={`/antrean-klaim/${claim.id}`}>
+                      <Link href={`/verifikasi/${claim.id}`}>
                         <button className="px-6 py-2 bg-[#0A1B3F] text-white rounded-lg text-xs font-bold hover:bg-[#152a5a] transition shadow-sm">
                           Tinjau
                         </button>

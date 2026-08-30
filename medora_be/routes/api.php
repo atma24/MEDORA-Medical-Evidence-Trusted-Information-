@@ -43,6 +43,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:USER')->group(function () {
         Route::get('/claims', [ClaimController::class, 'index']);
         Route::post('/claims', [ClaimController::class, 'store']);
+    });
+
+    // ==============================
+    // Detail Klaim (USER & REVIEWER)
+    // USER (pemilik klaim) & REVIEWER (untuk halaman verifikasi).
+    // Otorisasi final tetap di ClaimController@show (owner OR reviewer).
+    // ==============================
+    Route::middleware('role:USER,REVIEWER')->group(function () {
         Route::get('/claims/{claim}', [ClaimController::class, 'show']);
     });
 
@@ -51,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==============================
     Route::middleware('role:REVIEWER')->group(function () {
         Route::get('/review/claims', [ReviewController::class, 'claims']);
+        Route::get('/review/report', [ReviewController::class, 'report']);
         Route::post('/claims/{claim}/evidences/{claimEvidence}/review', [ClaimController::class, 'reviewEvidence']);
         Route::post('/claims/{claim}/review', [ClaimController::class, 'review']);
     });
