@@ -21,9 +21,11 @@ class AnalyzeClaimJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            $teksKlaim = trim($this->claim->text.'. '.$this->claim->detail);
+
             $response = Http::timeout(config('services.medora_ml.timeout', 120))
                 ->post(config('services.medora_ml.url').'/api/analyze-claim', [
-                    'teks_klaim' => $this->claim->text,
+                    'teks_klaim' => $teksKlaim,
                 ]);
 
             if ($response->failed()) {
@@ -112,14 +114,10 @@ class AnalyzeClaimJob implements ShouldQueue
                 'assessment' => $assessment['assessment'] ?? 'Tidak ada informasi',
             ]);
 
-            // 5. Tentukan status: REVIEW_NEEDED jika needs_review atau evidence_strength < 70
-            $needsReview = $assessment['needs_review'] ?? false;
-            $evidenceStrength = (float) ($assessment['evidence_strength'] ?? 0);
-
-            $newStatus = ClaimStatus::ANALYZED;
-            if ($needsReview || $evidenceStrength < 70) {
-                $newStatus = ClaimStatus::REVIEW_NEEDED;
-            }
+            // 5. Semua klaim WAJIB lewat review ahli sebelum dinyatakan final.
+            // ML hanya memberi rekomendasi (trust_score + assessment), keputusan
+            // akhir HOAX/FACT tetap di tangan reviewer. Tidak ada auto-valid.
+            $newStatus = ClaimStatus::REVIEW_NEEDED;
 
             $this->claim->update(['status' => $newStatus]);
 

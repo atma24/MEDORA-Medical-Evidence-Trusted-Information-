@@ -31,6 +31,21 @@ STOPWORDS_INDO = {
     'menggunakan', 'konsumsi', 'mengonsumsi', 'minum', 'meminum', 'makan', 'memakan',
     'butuh', 'perlunya', 'diperlukan', 'dibutuhkan', 'memerlukan', 'mengandung',
     'menghasilkan', 'mampu', 'berhasil', 'gagal', 'sukses',
+
+    # Kata fungsi tambahan yang sering bocor ke query
+    'tepat', 'dicampur', 'campur', 'menumpuk', 'menjadi', 'sehingga',
+    'membekukan', 'beku', 'memadatkan', 'padat', 'baru', 'saja', 'barusan',
+    'secara', 'langsung', 'sepenuhnya', 'menjalani', 'beredar', 'peredaran',
+    'forum', 'pesan', 'berantai', 'mengklaim', 'mengunyah', 'mensterilkan',
+    'masuk', 'sebelum', 'kemudian', 'hari', 'perlu', 'tanpa', 'berhenti',
+    'setelah', 'melalui', 'lewat', 'antara', 'hingga', 'sampai', 'yakni',
+    'yaitu', 'ialah', 'tersebut', 'berikut', 'seputar', 'katanya', 'konon',
+    'kabarnya', 'infonya', 'titik', 'saraf', 'sesi', 'kronis', 'akut',
+    'alternatif', 'pengobatan', 'terapi', 'obat-obatan', 'pernapasan',
+    'pernafasan', 'memperlambat', 'proses', 'tumpukan', 'menyebutkan',
+    'menyebut', 'artikel', 'menunjukkan', 'menjelaskan', 'di kemudian',
+    'kemudian', 'berhubungan', 'peningkatan', 'perkembangan', 'pemberian',
+    'dunia', 'seluruh', 'resistensi', 'bertanggung', 'jawab',
 }
 
 KAMUS_MEDIS = {
@@ -222,6 +237,71 @@ KAMUS_MEDIS = {
     'matahari': 'sun',
     'kekurangan': 'deficiency',
     'kekurangan vitamin': 'vitamin deficiency',
+    'akupunktur': 'acupuncture',
+    'akupuntur': 'acupuncture',
+    'inhaler': 'inhaler',
+    'kortikosteroid': 'corticosteroid',
+    'asma': 'asthma',
+
+    # Istilah yang sering muncul pada hoaks/mitos kesehatan
+    'sikat gigi': 'toothbrush',
+    'gigi': 'tooth',
+    'usus': 'intestine',
+    'usus besar': 'large intestine',
+    'dinding usus': 'intestinal wall',
+    'chip': 'microchip',
+    'microchip': 'microchip',
+    'cip': 'microchip',
+    '5g': '5G',
+    'sinyal': 'signal',
+    'radiasi': 'radiation',
+    'melacak': 'tracking',
+    'sabun': 'soap',
+    'cuci tangan': 'handwashing',
+    'mencuci tangan': 'handwashing',
+    'air mengalir': 'running water',
+    'diare': 'diarrhea',
+    'saluran pernapasan': 'respiratory tract',
+    'pernapasan': 'respiratory',
+    'autisme': 'autism',
+    'autis': 'autism',
+    'klorit': 'chlorite',
+    'natrium klorit': 'sodium chlorite',
+    'asam sitrat': 'citric acid',
+    'kopi': 'coffee',
+    'umur': 'lifespan',
+    'harapan hidup': 'life expectancy',
+    'panjang umur': 'longevity',
+    'hujan': 'rain',
+    'air hujan': 'rainwater',
+    'flu': 'influenza',
+    'influenza': 'influenza',
+    'basa': 'alkaline',
+    'asam': 'acid',
+    'lemak': 'fat',
+    'minyak': 'oil',
+    'perut': 'stomach',
+    'lambung': 'stomach',
+    'membekukan': 'freezing',
+    'beku': 'frozen',
+    'es': 'ice',
+    'air es': 'ice water',
+    'air dingin': 'cold water',
+    'kanker usus': 'colorectal cancer',
+    'racun': 'toxin',
+    'detoks': 'detox',
+    'detoksifikasi': 'detoxification',
+    'tenggorokan': 'throat',
+    'paru-paru': 'lung',
+    'paruparu': 'lung',
+    'menelan': 'swallowing',
+    'mengikis': 'scraping',
+    'plak': 'plaque',
+    'suntikan': 'injection',
+    'suntik': 'injection',
+    'dikendalikan': 'controlled',
+    'pemerintah': 'government',
+    'konspirasi': 'conspiracy',
     'kelebihan': 'excess',
     'keracunan': 'poisoning',
     'racun': 'poison',
@@ -327,16 +407,49 @@ def generate_query(teks_klaim: str, max_terms: int = 8) -> str:
     """Ubah teks klaim menjadi query pencarian PubMed (istilah medis EN gabungan AND)."""
     istilah = _ekstrak_istilah(teks_klaim)
 
-    # PubMed adalah database berbahasa Inggris: pakai istilah terjemahan saja
-    istilah_en = [t for t in istilah if not _terlihat_indonesia(t)]
+    # Kata non-terjemahan yang bocor: drop jika tidak ada di kamus medis
+    # (kata Indonesia mentah di query PubMed hampir pasti merusak hasil).
+    NON_TERJEMAHAN_DROP = set()
+    istilah_final = []
+    for t in istilah:
+        # Hasil terjemahan kamus selalu dipertahankan
+        if t in KAMUS_MEDIS.values():
+            istilah_final.append(t)
+            continue
+        # Heuristik akhiran Indonesia
+        if _terlihat_indonesia(t):
+            continue
+        # Kata mentah Indonesia (bukan hasil terjemahan): hanya lolos jika
+        # tampak seperti istilah medis internasional (mengandung karakter
+        # khas istilah latin/medis) — selain itu di-drop.
+        if re.search(r'(itis|osis|emia|ology|virus|vaccine|cancer|diabetes|asthma|covid|hpv|hiv)', t):
+            istilah_final.append(t)
+            continue
+        # Jika kata asli Indonesia-nya ada di teks dan tidak diterjemahkan,
+        # berarti bukan istilah medis -> drop.
+        # Pengecualian: kata serapan/istilah asing yang dipakai apa adanya
+        # dalam bahasa Indonesia (akupunktur, kortikosteroid, inhaler,
+        # kanker, serviks, vaksin, dsb.) tetap valid untuk query PubMed.
+        LOANWORD_ALLOW = re.compile(
+            r'(punktur|steroid|inhal|kanker|serviks|vaksin|virus|bakteri|'
+            r'hormon|kolesterol|diabetes|asma|alergi|kortiko|imunisasi|'
+            r'antibiotik|vitamin|mineral|protein|lemak|kanker|tumor|kista)'
+        )
+        if t.lower() in teks_klaim.lower() and t not in KAMUS_MEDIS.values():
+            if LOANWORD_ALLOW.search(t.lower()):
+                istilah_final.append(t)
+            continue
+        istilah_final.append(t)
 
-    if not istilah_en:
+    if not istilah_final:
         if istilah:
-            return ' AND '.join(istilah[:max_terms])
+            # Fallback: pakai hasil terjemahan kamus saja, atau kata pertama
+            terjemahan = [t for t in istilah if t in KAMUS_MEDIS.values()]
+            return ' AND '.join((terjemahan or istilah)[:max_terms])
         fallback = re.sub(r'[^a-z\s]', '', teks_klaim.lower()).strip()
         return fallback or 'health'
 
-    return ' AND '.join(istilah_en[:max_terms])
+    return ' AND '.join(istilah_final[:max_terms])
 
 
 def generate_query_or(teks_klaim: str, max_terms: int = 8) -> str:
@@ -363,5 +476,15 @@ def _terlihat_indonesia(istilah: str) -> bool:
 def istilah_untuk_ranking(teks_klaim: str, max_terms: int = 8) -> list[str]:
     """Kembalikan daftar istilah medis (terjemahan EN) untuk keperluan ranking relevansi."""
     istilah = _ekstrak_istilah(teks_klaim)
-    istilah_en = [t for t in istilah if not _terlihat_indonesia(t)]
-    return istilah_en[:max_terms]
+    hasil = []
+    for t in istilah:
+        if t in KAMUS_MEDIS.values():
+            hasil.append(t)
+        elif _terlihat_indonesia(t):
+            continue
+        elif t.lower() in teks_klaim.lower():
+            # kata mentah Indonesia yang tidak diterjemahkan -> skip
+            continue
+        else:
+            hasil.append(t)
+    return hasil[:max_terms]

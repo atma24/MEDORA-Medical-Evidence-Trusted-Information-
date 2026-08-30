@@ -116,10 +116,6 @@ const isActive = (path: string) => {
                     <svg className={`w-5 h-5 shrink-0 ${isActive('/riwayat-klaim') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     {isSidebarOpen && <span className="ml-3">Riwayat Klaim</span>}
                   </Link>
-                  <Link href="/artikel" className={getMenuClass('/artikel')}>
-                    <svg className={`w-5 h-5 shrink-0 ${isActive('/artikel') ? 'text-white' : 'text-[#243C62]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-                    {isSidebarOpen && <span className="ml-3">Artikel Tersimpan</span>}
-                  </Link>
                 </>
               )}
             </nav>

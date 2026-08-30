@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { useState, useEffect } from 'react';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import Link from 'next/link';
@@ -35,7 +35,7 @@ export default function LandingPage() {
         <div className={`min-h-screen bg-white text-slate-800 ${plusJakarta.className}`}>
             
             {/* =========================================
-                NAVBAR (Ditambah menu Artikel Medis)
+                NAVBAR
             ========================================= */}
             <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
                 <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-between items-center">
@@ -47,7 +47,6 @@ export default function LandingPage() {
                         <a href="#tentang" onClick={(e) => scrollToSection(e, 'tentang')} className="hover:text-[#4285F4] transition cursor-pointer">Tentang Kami</a>
                         <a href="#cara-kerja" onClick={(e) => scrollToSection(e, 'cara-kerja')} className="hover:text-[#4285F4] transition cursor-pointer">Cara Kerja</a>
                         <a href="#populer" onClick={(e) => scrollToSection(e, 'populer')} className="hover:text-[#4285F4] transition cursor-pointer">Klaim Terpopuler</a>
-                        <a href="#artikel" onClick={(e) => scrollToSection(e, 'artikel')} className="hover:text-[#4285F4] transition cursor-pointer">Artikel Medis</a>
                         <a href="#mitra" onClick={(e) => scrollToSection(e, 'mitra')} className="hover:text-[#4285F4] transition cursor-pointer">Mitra Ahli</a>
                     </div>
 
@@ -203,101 +202,6 @@ export default function LandingPage() {
             </section>
 
             {/* =========================================
-                ARTIKEL MEDIS SECTION (FITUR BARU)
-            ========================================= */}
-            <section id="artikel" className="py-24 bg-white border-t border-gray-100">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
-                        <div>
-                            <span className="text-blue-500 font-bold tracking-widest text-[12px] uppercase mb-2 block">Pusat Edukasi</span>
-                            <h2 className="text-[32px] font-extrabold text-[#0a1b3f] tracking-tight">Artikel Literasi Medis</h2>
-                        </div>
-                        <Link href="#" className="text-[14.5px] font-bold text-[#1c2d5a] hover:text-[#4285F4] flex items-center gap-2 transition tracking-wide group">
-                            Lihat Semua Artikel <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
-                        </Link>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {/* Artikel 1 */}
-                        <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 transition-all duration-300 group cursor-pointer flex flex-col">
-                            {/* Placeholder Image (Bisa diganti foto asli nanti) */}
-                            <div className="h-48 bg-[#eef2fb] relative overflow-hidden flex items-center justify-center">
-                                <div className="absolute inset-0 bg-[#1c2d5a]/5 group-hover:bg-transparent transition-colors z-10"></div>
-                                <svg className="w-12 h-12 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
-                            </div>
-                            <div className="p-7 flex flex-col flex-grow">
-                                <div className="mb-4">
-                                    <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-wider">Edukasi Publik</span>
-                                </div>
-                                <h3 className="text-[18px] font-bold text-[#0a1b3f] mb-3 leading-snug group-hover:text-blue-600 transition-colors">
-                                    Bahaya Self-Diagnosis Melalui Gejala di Internet
-                                </h3>
-                                <p className="text-[13.5px] text-gray-500 mb-6 leading-relaxed flex-grow">
-                                    Mendiagnosis diri sendiri bermodal artikel internet seringkali berujung pada kecemasan berlebih (cyberchondria) dan penanganan yang salah.
-                                </p>
-                                <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
-                                    <span className="text-[12px] text-gray-400 font-medium">12 Mei 2026</span>
-                                    <span className="text-gray-300 group-hover:text-blue-500 transition-colors">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Artikel 2 */}
-                        <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 transition-all duration-300 group cursor-pointer flex flex-col">
-                            <div className="h-48 bg-[#eef2fb] relative overflow-hidden flex items-center justify-center">
-                                <div className="absolute inset-0 bg-[#1c2d5a]/5 group-hover:bg-transparent transition-colors z-10"></div>
-                                <svg className="w-12 h-12 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
-                            </div>
-                            <div className="p-7 flex flex-col flex-grow">
-                                <div className="mb-4">
-                                    <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-wider">Penelitian</span>
-                                </div>
-                                <h3 className="text-[18px] font-bold text-[#0a1b3f] mb-3 leading-snug group-hover:text-blue-600 transition-colors">
-                                    Mitos Skincare dan Kesehatan Kulit di Media Sosial
-                                </h3>
-                                <p className="text-[13.5px] text-gray-500 mb-6 leading-relaxed flex-grow">
-                                    Banyak beredar tips perawatan kulit yang justru merusak *skin barrier*. Ketahui fakta medis di balik tren viral yang belum terbukti klinis.
-                                </p>
-                                <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
-                                    <span className="text-[12px] text-gray-400 font-medium">08 Mei 2026</span>
-                                    <span className="text-gray-300 group-hover:text-blue-500 transition-colors">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Artikel 3 */}
-                        <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 transition-all duration-300 group cursor-pointer flex flex-col">
-                            <div className="h-48 bg-[#eef2fb] relative overflow-hidden flex items-center justify-center">
-                                <div className="absolute inset-0 bg-[#1c2d5a]/5 group-hover:bg-transparent transition-colors z-10"></div>
-                                <svg className="w-12 h-12 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
-                            </div>
-                            <div className="p-7 flex flex-col flex-grow">
-                                <div className="mb-4">
-                                    <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full uppercase tracking-wider">Pencegahan</span>
-                                </div>
-                                <h3 className="text-[18px] font-bold text-[#0a1b3f] mb-3 leading-snug group-hover:text-blue-600 transition-colors">
-                                    Pentingnya Membaca Label Obat dan Interaksinya
-                                </h3>
-                                <p className="text-[13.5px] text-gray-500 mb-6 leading-relaxed flex-grow">
-                                    Menggabungkan sembarang obat bebas dengan suplemen herbal tanpa anjuran resep dapat menimbulkan komplikasi hati yang serius.
-                                </p>
-                                <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
-                                    <span className="text-[12px] text-gray-400 font-medium">02 Mei 2026</span>
-                                    <span className="text-gray-300 group-hover:text-blue-500 transition-colors">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* =========================================
                 CTA REVIEWER SECTION
             ========================================= */}
             <section id="mitra" className="py-32 bg-[#f8faff]">
@@ -331,7 +235,7 @@ export default function LandingPage() {
                                 </p>
                             </div>
                             <p className="text-[12.5px] text-gray-500 tracking-wide">
-                                © 2026 MEDORA by Nexora Team. Seluruh Hak Cipta Dilindungi.
+                                Â© 2026 MEDORA by Nexora Team. Seluruh Hak Cipta Dilindungi.
                             </p>
                         </div>
 

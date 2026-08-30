@@ -6,6 +6,11 @@ HUBUNGAN_INSUFFICIENT = "INSUFFICIENT"
 BATAS_TERVERIFIKASI = 70.0
 BATAS_MISINFORMASI = 30.0
 
+# Safety net: klaim dengan bukti terlalu tipis tidak boleh langsung
+# diverifikasi/dinyatakan misinformasi dengan penuh percaya diri.
+MIN_EVIDENCE_KUAT = 3          # jumlah minimal evidence agar lolos tanpa flag review
+BATAS_SKOR_BUKTI_TIPIS = 50.0  # trust_score dicap di zona abu-abu jika bukti tipis
+
 
 def _map_ml2_label(label: str) -> str:
     """Petakan label dari model ML2 ke 4 kategori hubungan."""
@@ -39,10 +44,11 @@ def _kekuatan_single(ev: dict) -> float:
 
 
 def _kekuatan_agregat(evidence_results: list[dict]) -> float:
-    """Kekuatan agregat berbasis proporsi SUPPORT vs CONTRADICT + rata-rata confidence.
+    """Kekuatan agregat berbasis proporsi SUPPORT vs CONTRADICT + confidence + relevansi.
 
-    Skor di rentang [-1, 1]. Relevansi TF-IDF lintas bahasa cenderung rendah,
-    sehingga proporsi & confidence lebih dominan daripada relevansi mentah.
+    Skor di rentang [-1, 1]. Relevansi rendah mengecilkan kekuatan agregat
+    supaya evidence yang tidak benar-benar menjawab klaim tidak menggelembungkan
+    trust_score (mencegah false positive dari retrieval yang kebetulan mirip topik).
     """
     total = len(evidence_results)
     if total == 0:
@@ -60,11 +66,18 @@ def _kekuatan_agregat(evidence_results: list[dict]) -> float:
     ]
     if relevan:
         conf_avg = sum(float(e.get("confidence") or 50.0) / 100 for e in relevan) / len(relevan)
+        # Faktor relevansi: evidence SUPPORT/CONTRADICT dengan relevance_score
+        # sangat rendah dianggap tidak menjawab klaim. TF-IDF lintas bahasa
+        # (klaim Indonesia vs evidence Inggris) memang cenderung rendah,
+        # sehingga baseline dinaikkan dan hanya penalti pada kasus ekstrem.
+        rel_avg = sum(float(e.get("relevance_score") or 0.0) for e in relevan) / len(relevan)
+        rel_factor = 0.6 + 0.4 * max(0.0, min(1.0, rel_avg))
     else:
         conf_avg = 0.5
+        rel_factor = 1.0
 
-    # Evidence_strength = arah proporsi dikoreksi confidence
-    strength = net * (0.6 + 0.4 * max(0.0, min(1.0, conf_avg)))
+    # Evidence_strength = arah proporsi dikoreksi confidence dan relevansi
+    strength = net * (0.6 + 0.4 * max(0.0, min(1.0, conf_avg))) * rel_factor
     return round(max(-1.0, min(1.0, strength)), 4)
 
 
@@ -83,6 +96,13 @@ def hitung_assessment(
     # trust_score di tengah (50), digeser oleh kekuatan bukti
     trust_score = round(50 + (evidence_strength * 50), 2)
     trust_score = max(0.0, min(100.0, trust_score))
+
+    # Safety net: evidence terlalu tipis -> cap skor di zona abu-abu
+    # supaya klaim tidak bisa langsung Terverifikasi/Misinformasi
+    # hanya dari 1-2 artikel (mencegah false positive/negative).
+    bukti_tipis = len(evidence_results) < MIN_EVIDENCE_KUAT
+    if bukti_tipis:
+        trust_score = min(trust_score, BATAS_SKOR_BUKTI_TIPIS)
 
     if trust_score >= BATAS_TERVERIFIKASI:
         assessment = "Terverifikasi"
@@ -103,5 +123,5 @@ def hitung_assessment(
         "evidence_strength": evidence_strength,
         "trust_score": trust_score,
         "assessment": assessment,
-        "needs_review": trust_score < BATAS_TERVERIFIKASI,
+        "needs_review": bukti_tipis or trust_score < BATAS_TERVERIFIKASI,
     }
