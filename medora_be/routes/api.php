@@ -56,12 +56,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/claims/{claim}', [ClaimController::class, 'show']);
     });
 
+    // PDF download: owner atau REVIEWER/ADMIN (otorisasi di controller)
+    Route::get('/claims/{claim}/pdf', [ClaimController::class, 'downloadPdf']);
+
     // ==============================
     // REVIEWER Routes
     // ==============================
     Route::middleware('role:REVIEWER')->group(function () {
         Route::get('/review/claims', [ReviewController::class, 'claims']);
+        Route::get('/review/stats', [ReviewController::class, 'stats']);
+        Route::get('/review/history', [ReviewController::class, 'history']);
         Route::get('/review/report', [ReviewController::class, 'report']);
+        Route::get('/review/report/pdf', [ReviewController::class, 'reportPdf']);
         Route::post('/claims/{claim}/evidences/{claimEvidence}/review', [ClaimController::class, 'reviewEvidence']);
         Route::post('/claims/{claim}/review', [ClaimController::class, 'review']);
     });

@@ -65,7 +65,7 @@ export default function ReviewerPengaturanAkunPage() {
           nama: user.name || '',
           email: user.email || '',
           telepon: user.phone || '',
-          sip: user.sip || '',
+          sip: user.str_number || user.sip || '',
           spesialisasi: user.speciality?.name || user.spesialisasi || '',
           instansi: user.institution || ''
         });
@@ -107,7 +107,12 @@ export default function ReviewerPengaturanAkunPage() {
       localStorage.setItem('medora_user', JSON.stringify({ ...savedUser, name: formData.nama }));
       
     } catch (error: any) {
-      setErrorMsg(error.response?.data?.message || 'Gagal menyimpan profil.');
+      if (error.response?.data?.errors) {
+        const firstError = Object.values(error.response.data.errors)[0] as string[];
+        setErrorMsg(firstError[0]);
+      } else {
+        setErrorMsg(error.response?.data?.message || 'Gagal menyimpan profil.');
+      }
     } finally {
       setIsSaving(false);
     }

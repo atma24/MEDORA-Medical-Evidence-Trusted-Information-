@@ -20,30 +20,41 @@ interface Claim {
 export default function ReviewerDashboard() {
   const [claimsQueue, setClaimsQueue] = useState<Claim[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<{ menunggu: number; terverifikasi: number; keliru: number } | null>(null);
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
     const userStr = localStorage.getItem('medora_user') || sessionStorage.getItem('medora_user');
     if (userStr) setUserData(JSON.parse(userStr));
 
-    const fetchQueue = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get('/review/claims');
-        setClaimsQueue(response.data);
+        const [queueRes, statsRes] = await Promise.all([
+          api.get('/review/claims'),
+          api.get('/review/stats'),
+        ]);
+        setClaimsQueue(queueRes.data);
+        setStats(statsRes.data);
       } catch (error) {
         console.error("Gagal mengambil antrean klaim:", error);
+        // Fallback: coba fetch queue saja jika stats gagal
+        try {
+          const response = await api.get('/review/claims');
+          setClaimsQueue(response.data);
+        } catch {}
       } finally {
         setIsLoading(false);
+        setIsStatsLoading(false);
       }
     };
 
-    fetchQueue();
+    fetchData();
   }, []);
 
-  const totalMenunggu = claimsQueue.length;
-  // Placeholder untuk statistik riwayat (disesuaikan dengan API aktual nantinya)
-  const totalTerverifikasi = 8; 
-  const totalKeliru = 3;
+  const totalMenunggu = stats?.menunggu ?? claimsQueue.length;
+  const totalTerverifikasi = stats?.terverifikasi ?? 0;
+  const totalKeliru = stats?.keliru ?? 0;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -117,7 +128,7 @@ export default function ReviewerDashboard() {
                <IconTinjauanCardReviewer className="w-4 h-4" />
             </div>
           </div>
-          <h3 className="text-3xl font-bold text-slate-800">{isLoading ? '...' : totalMenunggu}</h3>
+          <h3 className="text-3xl font-bold text-slate-800">{isLoading || isStatsLoading ? '...' : totalMenunggu}</h3>
         </div>
         
         {/* Card 2 */}
@@ -128,7 +139,7 @@ export default function ReviewerDashboard() {
               <IconTervalidasiStatus className="w-4 h-4" />
             </div>
           </div>
-          <h3 className="text-3xl font-bold text-slate-800">{totalTerverifikasi}</h3>
+          <h3 className="text-3xl font-bold text-slate-800">{isStatsLoading ? '...' : totalTerverifikasi}</h3>
         </div>
         
         {/* Card 3 */}
@@ -139,7 +150,7 @@ export default function ReviewerDashboard() {
               <IconKeliruStatus className="w-4 h-4" />
             </div>
           </div>
-          <h3 className="text-3xl font-bold text-slate-800">{totalKeliru}</h3>
+          <h3 className="text-3xl font-bold text-slate-800">{isStatsLoading ? '...' : totalKeliru}</h3>
         </div>
       </div>
 

@@ -233,6 +233,47 @@ class AuthController extends Controller
         return response()->json(['message' => 'Email verifikasi telah dikirim ulang.']);
     }
 
+    public function updateProfile(Request $request): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'bio' => ['nullable', 'string', 'max:1000'],
+            'institution' => ['nullable', 'string', 'max:255'],
+            // REVIEWER: support both 'sip' (frontend) and 'str_number' (DB)
+            'sip' => ['nullable', 'string', 'max:255', 'unique:users,str_number,' . $user->id],
+            'str_number' => ['nullable', 'string', 'max:255', 'unique:users,str_number,' . $user->id],
+        ]);
+
+        $data = $request->only(['name', 'email', 'phone', 'bio', 'institution']);
+
+        // Normalize SIP -> str_number
+        if ($request->filled('sip')) {
+            $data['str_number'] = $request->input('sip');
+        } elseif ($request->filled('str_number')) {
+            $data['str_number'] = $request->input('str_number');
+        }
+
+        // Reset email verification if email changed
+        $emailChanged = $request->filled('email') && $request->input('email') !== $user->email;
+
+        $user->update($data);
+
+        if ($emailChanged && $user->hasVerifiedEmail()) {
+            $user->update(['email_verified_at' => null]);
+            // Optionally re-send verification: $user->sendEmailVerificationNotification();
+        }
+
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui.',
+            'user' => $user->fresh()->load('speciality'),
+        ]);
+    }
+
     public function updatePassword(Request $request): JsonResponse
     {
         $request->validate([

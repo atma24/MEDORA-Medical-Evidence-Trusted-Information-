@@ -20,11 +20,12 @@ export default function PengaturanAkunSwitcher() {
     return <div className="flex items-center justify-center h-full text-gray-500 font-medium">Memuat Pengaturan...</div>;
   }
 
-  // Render halaman sesuai Role
+  // Render halaman sesuai Role — tabel users yang sama dipakai untuk semua role (USER/REVIEWER/ADMIN)
   if (role === 'REVIEWER') {
     return <ReviewerSetting />;
   }
 
-  // Jika bukan reviewer (user awam), tampilkan ini
+  // ADMIN dan USER sama-sama pakai UserSetting (kolom phone/bio/institution sudah ada di tabel users)
+  // UserSetting akan deteksi role dari localStorage untuk label badge Administrator vs Pengguna Umum
   return <UserSetting />;
 }

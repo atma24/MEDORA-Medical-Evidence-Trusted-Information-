@@ -103,7 +103,12 @@ export default function UserPengaturanAkunPage() {
       localStorage.setItem('medora_user', JSON.stringify({ ...savedUser, name: formData.nama }));
 
     } catch (error: any) {
-      setErrorMsg(error.response?.data?.message || 'Gagal menyimpan perubahan.');
+      if (error.response?.data?.errors) {
+        const firstError = Object.values(error.response.data.errors)[0] as string[];
+        setErrorMsg(firstError[0]);
+      } else {
+        setErrorMsg(error.response?.data?.message || 'Gagal menyimpan perubahan.');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -149,6 +154,14 @@ export default function UserPengaturanAkunPage() {
     }, 600);
   };
 
+  // Role untuk label (pakai tabel users yang sama — ADMIN juga pakai endpoint /profile yang sama)
+  const [roleLabel, setRoleLabel] = useState('Pengguna Umum');
+  useEffect(() => {
+    const r = (localStorage.getItem('medora_role') || sessionStorage.getItem('medora_role') || 'USER').toUpperCase();
+    if (r === 'ADMIN') setRoleLabel('Administrator');
+    else if (r === 'REVIEWER') setRoleLabel('Reviewer');
+    else setRoleLabel('Pengguna Umum');
+  }, []);
   // Inisial untuk Avatar Visual
   const initial = formData.nama ? formData.nama.charAt(0).toUpperCase() : 'U';
 
@@ -205,7 +218,7 @@ export default function UserPengaturanAkunPage() {
             <h3 className="text-[20px] font-extrabold text-slate-800 mb-2">
               {isLoading ? 'Memuat...' : formData.nama}
             </h3>
-            <span className="inline-flex px-4 py-1.5 bg-[#EEF2FF] text-[#1E3A8A] rounded-full text-[12px] font-bold mb-5">Pengguna Umum</span>
+            <span className="inline-flex px-4 py-1.5 bg-[#EEF2FF] text-[#1E3A8A] rounded-full text-[12px] font-bold mb-5">{roleLabel}</span>
           </div>
         </div>
 
