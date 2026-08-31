@@ -1,6 +1,6 @@
 # Daftar Klaim Uji MEDORA
 
-10 klaim untuk pengujian pipeline analisis (ML + review).
+13 klaim untuk pengujian pipeline analisis (ML + review).
 
 ---
 
@@ -55,11 +55,29 @@
 **Detail:** Mencuci tangan dengan sabun dan air mengalir terbukti menurunkan risiko diare dan infeksi saluran pernapasan.
 **Ekspektasi:** FAKTA
 
+### 10. Merokok & Kanker Paru-paru ⭐ AUTO-VERIF
+**Topik:** Merokok menyebabkan kanker paru-paru.
+**Detail:** Kebiasaan merokok dalam jangka panjang terbukti meningkatkan risiko kanker paru-paru secara signifikan.
+**Ekspektasi:** FAKTA — auto-verified (trust ~77%, evidence 5/5 SUPPORT)
+**Catatan:** Lolos threshold 75% → status ANALYZED tanpa review manual.
+
+### 11. HPV & Kanker Serviks ⭐ AUTO-VERIF
+**Topik:** Human papillomavirus adalah penyebab utama kanker serviks.
+**Detail:** Infeksi HPV tipe 16 dan 18 bertanggung jawab atas mayoritas kasus kanker leher rahim.
+**Ekspektasi:** FAKTA — auto-verified (trust ~75.6%, evidence 5/5 SUPPORT)
+**Catatan:** Lolos threshold 75% → status ANALYZED tanpa review manual.
+
+### 12. Helicobacter pylori & Tukak Lambung ⭐ AUTO-VERIF
+**Topik:** Helicobacter pylori menyebabkan tukak lambung.
+**Detail:** Infeksi bakteri Helicobacter pylori di lambung merupakan penyebab utama penyakit tukak peptik.
+**Ekspektasi:** FAKTA — auto-verified (trust ~75.1%, evidence 5/5 SUPPORT)
+**Catatan:** Lolos threshold 75% → status ANALYZED tanpa review manual.
+
 ---
 
 ## 🟡 Klaim Abu-abu / Perlu Review
 
-### 10. Kopi & Umur Panjang
+### 13. Kopi & Umur Panjang
 **Topik:** Minum kopi setiap hari bisa memperpanjang umur.
 **Detail:** Beberapa penelitian mengaitkan konsumsi kopi rutin dengan umur harapan hidup yang lebih panjang.
 **Ekspektasi:** ABU-ABU (bukti observasional, tidak konklusif)

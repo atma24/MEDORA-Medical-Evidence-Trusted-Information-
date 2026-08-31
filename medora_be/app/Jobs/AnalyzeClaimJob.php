@@ -114,10 +114,16 @@ class AnalyzeClaimJob implements ShouldQueue
                 'assessment' => $assessment['assessment'] ?? 'Tidak ada informasi',
             ]);
 
-            // 5. Semua klaim WAJIB lewat review ahli sebelum dinyatakan final.
-            // ML hanya memberi rekomendasi (trust_score + assessment), keputusan
-            // akhir HOAX/FACT tetap di tangan reviewer. Tidak ada auto-valid.
-            $newStatus = ClaimStatus::REVIEW_NEEDED;
+            // 5. Tentukan status akhir:
+            //    - trust_score > 75  -> auto-verified (ANALYZED), ML sangat yakin
+            //                         (hanya tercapai jika >=3 evidence, mayoritas
+            //                          SUPPORT, dan tanpa CONTRADICT)
+            //    - selebihnya        -> wajib review ahli (REVIEW_NEEDED)
+            $trustScore = (float) ($assessment['trust_score'] ?? 0);
+
+            $newStatus = $trustScore > 75.0
+                ? ClaimStatus::ANALYZED
+                : ClaimStatus::REVIEW_NEEDED;
 
             $this->claim->update(['status' => $newStatus]);
 
