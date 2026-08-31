@@ -1,18 +1,17 @@
 import axios from 'axios';
 
-// Bikin instance axios dengan baseURL Laravel kamu
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api', // Disesuaikan dengan backend URL kamu
+    // Membaca URL dinamis dari .env.local (lokal/vps)
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://api.medorahealth.cloud/api',
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     },
 });
 
-// Request Interceptor: Otomatis nambahin Token ke setiap request (kalau udah login)
+// Request Interceptor: Otomatis menempelkan token Bearer
 api.interceptors.request.use(
     (config) => {
-        // Baca token dari localStorage (Remember Me) atau sessionStorage (tanpa Remember Me)
         const token = typeof window !== 'undefined'
             ? (localStorage.getItem('medora_token') || sessionStorage.getItem('medora_token'))
             : null;
@@ -21,19 +20,14 @@ api.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Otomatis nendang user ke /login kalau token expired (401)
+// Response Interceptor: Auto-logout jika token expired (401)
 api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
+    (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            // Kalau unauthorized, hapus token dan tendang ke halaman login
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('medora_token');
                 localStorage.removeItem('medora_user');

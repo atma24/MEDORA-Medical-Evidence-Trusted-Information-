@@ -146,7 +146,8 @@ class AuthController extends Controller
         $token = $user->createToken('google')->plainTextToken;
         $userData = $user->fresh()->load('speciality');
 
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+       // Hapus atau ganti baris $frontendUrl lama dengan ini:
+        $frontendUrl = config('app.frontend_url');
         $redirectUrl = "{$frontendUrl}/auth/callback?token=" . urlencode($token) . "&user=" . urlencode(json_encode($userData));
 
         return redirect()->away($redirectUrl);
