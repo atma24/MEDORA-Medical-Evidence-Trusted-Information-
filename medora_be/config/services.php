@@ -42,7 +42,7 @@ return [
     ],
 
     'medora_ml' => [
-        'url' => env('MEDORA_ML_URL', 'http://127.0.0.1:8001'),
+        'url' => env('MEDORA_ML_URL', 'http://127.0.0.1:5000'),
         'timeout' => 120,
     ],
 
