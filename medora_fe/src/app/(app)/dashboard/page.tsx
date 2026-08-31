@@ -11,7 +11,17 @@ export default function DashboardSwitcher() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let savedRole = localStorage.getItem('medora_role') || sessionStorage.getItem('medora_role');
+    // Robust role detection: prioritaskan storage yang punya token aktif, fallback ke medora_user
+    const tokenLocal = localStorage.getItem('medora_token');
+    const tokenSession = sessionStorage.getItem('medora_token');
+    const roleLocal = localStorage.getItem('medora_role');
+    const roleSession = sessionStorage.getItem('medora_role');
+    let savedRole: string | null = null;
+    if (tokenLocal && roleLocal) savedRole = roleLocal;
+    else if (tokenSession && roleSession) savedRole = roleSession;
+    else if (roleLocal) savedRole = roleLocal;
+    else if (roleSession) savedRole = roleSession;
+
     if (!savedRole) {
       const userStr = localStorage.getItem('medora_user') || sessionStorage.getItem('medora_user');
       if (userStr) {
@@ -21,6 +31,8 @@ export default function DashboardSwitcher() {
         } catch { /* ignore */ }
       }
     }
+    // Normalisasi: enum di BE uppercase, tapi FE simpan bisa lowercase
+    if (savedRole) savedRole = savedRole.toUpperCase();
     setRole(savedRole);
     setIsLoading(false);
   }, []);
