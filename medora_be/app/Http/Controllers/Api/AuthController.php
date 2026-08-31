@@ -83,6 +83,21 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
+        // Cek apakah 2FA Email via Cache aktif (minimal tanpa tabel)
+        if (\App\Http\Controllers\Api\TwoFactorController::isEnabledForUser($user->id)) {
+            // Generate OTP & temp_token untuk step-2, kirim email
+            $two = \App\Http\Controllers\Api\TwoFactorController::initiateLogin2FA($user);
+            // Revoke old tokens agar tidak bisa pakai token lama tanpa 2FA
+            $user->tokens()->delete();
+            return response()->json([
+                'requires_2fa' => true,
+                'temp_token' => $two['temp_token'],
+                'method' => 'email',
+                'message' => 'Kode 2FA telah dikirim ke email Anda.',
+                'debug_code' => $two['debug_code'] ?? null,
+            ], 202);
+        }
+
         // Revoke old tokens
         $user->tokens()->delete();
 

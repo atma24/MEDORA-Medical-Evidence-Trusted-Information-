@@ -382,10 +382,11 @@ export default function RegisterUI() {
                                     <input 
                                         type="text" 
                                         placeholder="nama lengkap anda" 
-                                        className={`pl-10 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] transition ${fieldErrors.name ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
+                                        className={`pl-10 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] bg-white text-slate-800 placeholder:text-gray-400 transition ${fieldErrors.name ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
                                         value={data.name}
                                         onChange={handleNameChange} 
                                         disabled={isSubmitting}
+                                        autoComplete="name"
                                     />
                                 </div>
                                 {fieldErrors.name && <p className="text-red-500 text-[10px] mt-1 pl-1 font-medium">{fieldErrors.name}</p>}
@@ -401,10 +402,11 @@ export default function RegisterUI() {
                                     <input 
                                         type="email" 
                                         placeholder="nama@email.com" 
-                                        className={`pl-10 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] transition ${fieldErrors.email ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
+                                        className={`pl-10 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] bg-white text-slate-800 placeholder:text-gray-400 transition ${fieldErrors.email ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
                                         value={data.email}
                                         onChange={handleEmailChange} 
                                         disabled={isSubmitting}
+                                        autoComplete="email"
                                     />
                                 </div>
                                 {fieldErrors.email && <p className="text-red-500 text-[10px] mt-1 pl-1 font-medium">{fieldErrors.email}</p>}
@@ -421,10 +423,11 @@ export default function RegisterUI() {
                                         <input 
                                             type={showPassword ? "text" : "password"} 
                                             placeholder="••••••••" 
-                                            className={`pl-9 pr-8 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] transition ${fieldErrors.password ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
+                                            className={`pl-9 pr-8 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] bg-white text-slate-800 placeholder:text-gray-400 transition ${fieldErrors.password ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
                                             value={data.password}
                                             onChange={handlePasswordChange} 
                                             disabled={isSubmitting}
+                                            autoComplete="new-password"
                                         />
                                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-600 focus:outline-none" disabled={isSubmitting}>
@@ -448,10 +451,11 @@ export default function RegisterUI() {
                                         <input 
                                             type={showPasswordConfirm ? "text" : "password"} 
                                             placeholder="••••••••" 
-                                            className={`pl-9 pr-8 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] transition ${fieldErrors.password_confirmation ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
+                                            className={`pl-9 pr-8 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] bg-white text-slate-800 placeholder:text-gray-400 transition ${fieldErrors.password_confirmation ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
                                             value={data.password_confirmation}
                                             onChange={handlePasswordConfirmChange} 
                                             disabled={isSubmitting}
+                                            autoComplete="new-password"
                                         />
                                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                                             <button type="button" onClick={() => setShowPasswordConfirm(!showPasswordConfirm)} className="text-gray-400 hover:text-gray-600 focus:outline-none" disabled={isSubmitting}>
@@ -550,11 +554,12 @@ export default function RegisterUI() {
                                         type="text"
                                         maxLength={16}
                                         placeholder="Masukkan nomor registrasi medis Anda"
-                                        className={`pl-10 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[13px] transition ${fieldErrors.str_number ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
+                                        className={`pl-10 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[13px] bg-white text-slate-800 placeholder:text-gray-400 transition ${fieldErrors.str_number ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
                                         value={data.str_number}
                                         onChange={handleStrChange}
                                         disabled={isSubmitting}
                                         required
+                                        autoComplete="off"
                                     />
                                 </div>
                                 {fieldErrors.str_number && <p className="text-red-500 text-[10.5px] mt-1.5 pl-1 font-medium">{fieldErrors.str_number}</p>}

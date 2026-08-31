@@ -54,12 +54,11 @@ export default function AdminUserDetailPage() {
     e.preventDefault();
     setSaving(true); setMsg('');
     try {
-      const payload: any = { ...form };
-      if (!payload.speciality_id) payload.speciality_id = null;
-      if (!payload.str_number) payload.str_number = null;
+      // FE only: hanya kirim status (admin cuma bisa approve/reject)
+      const payload: any = { status: form.status };
       const res = await api.put(`/admin/users/${id}`, payload);
       const updated = res.data.user ?? res.data.data ?? res.data;
-      setUser(updated); setIsSuccess(true); setMsg('Data pengguna berhasil diperbarui.');
+      setUser(updated); setIsSuccess(true); setMsg('Status pengguna berhasil diperbarui.');
     } catch (e: any) {
       setIsSuccess(false);
       setMsg(e?.response?.data?.message || (typeof e?.response?.data?.errors === 'object' ? Object.values(e.response.data.errors).flat().join(', ') : 'Gagal menyimpan perubahan.'));
@@ -91,18 +90,22 @@ export default function AdminUserDetailPage() {
         </div>
       </div>
       {msg && <div className={`mb-5 p-4 rounded-xl text-xs md:text-sm font-medium flex items-center justify-between shadow-sm border ${isSuccess ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'}`}><span>{msg}</span><button onClick={() => setMsg('')} className="font-bold opacity-60 hover:opacity-100">✕</button></div>}
+      <div className="bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold px-4 py-2.5 rounded-xl mb-4 flex items-center gap-2">
+        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <span>Admin hanya dapat mengubah <b>Status</b> (Approve/Reject). Data lain terkunci.</span>
+      </div>
       <div className="bg-white rounded-2xl border border-slate-200/80 p-6 md:p-8 shadow-sm">
         <form onSubmit={handleSave} className="space-y-5">
-          <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Nama Lengkap</label><input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#1E3A8A] focus:bg-white transition" required /></div>
-          <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Alamat Email</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#1E3A8A] focus:bg-white transition" required /></div>
+          <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Nama Lengkap</label><input type="text" value={form.name} disabled title="Hanya status yang dapat diubah admin" className="w-full px-4 py-2.5 bg-gray-100 border border-slate-200 rounded-xl text-xs text-slate-500 cursor-not-allowed" required /></div>
+          <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Alamat Email</label><input type="email" value={form.email} disabled title="Hanya status yang dapat diubah admin" className="w-full px-4 py-2.5 bg-gray-100 border border-slate-200 rounded-xl text-xs text-slate-500 cursor-not-allowed" required /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Role Akses</label><select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#1E3A8A] focus:bg-white transition"><option value="USER">USER</option><option value="REVIEWER">REVIEWER</option><option value="ADMIN">ADMIN</option></select></div>
-            <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Status Akun</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#1E3A8A] focus:bg-white transition"><option value="PENDING">PENDING</option><option value="APPROVED">APPROVED</option><option value="REJECTED">REJECTED</option></select></div>
+            <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Role Akses</label><select value={form.role} disabled title="Hanya status yang dapat diubah admin" className="w-full px-3.5 py-2.5 bg-gray-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-500 cursor-not-allowed"><option value="USER">USER</option><option value="REVIEWER">REVIEWER</option><option value="ADMIN">ADMIN</option></select></div>
+            <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Status Akun</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-3.5 py-2.5 bg-white border border-[#1E3A8A] rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#1E3A8A] focus:bg-white transition shadow-sm"><option value="PENDING">PENDING</option><option value="APPROVED">APPROVED</option><option value="REJECTED">REJECTED</option></select></div>
           </div>
-          <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Spesialisasi Medis (Jika Reviewer)</label><select value={form.speciality_id} onChange={(e) => setForm({ ...form, speciality_id: e.target.value })} className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-[#1E3A8A] focus:bg-white transition"><option value="">— Tidak Ada —</option>{specialities.map((s: any) => (<option key={s.id} value={s.id}>{s.name}</option>))}</select></div>
-          <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Nomor Surat Tanda Registrasi (STR)</label><input type="text" value={form.str_number} onChange={(e) => setForm({ ...form, str_number: e.target.value })} placeholder="Masukkan No. STR dokter..." className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-[#1E3A8A] focus:bg-white transition" /></div>
+          <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Spesialisasi Medis (Jika Reviewer)</label><select value={form.speciality_id} disabled title="Hanya status yang dapat diubah admin" className="w-full px-3.5 py-2.5 bg-gray-100 border border-slate-200 rounded-xl text-xs font-medium text-slate-500 cursor-not-allowed"><option value="">— Tidak Ada —</option>{specialities.map((s: any) => (<option key={s.id} value={s.id}>{s.name}</option>))}</select></div>
+          <div><label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Nomor Surat Tanda Registrasi (STR)</label><input type="text" value={form.str_number} disabled title="Hanya status yang dapat diubah admin" placeholder="Masukkan No. STR dokter..." className="w-full px-4 py-2.5 bg-gray-100 border border-slate-200 rounded-xl text-xs font-mono text-slate-500 cursor-not-allowed" /></div>
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-3 border-t border-slate-100">
-            <button type="submit" disabled={saving} className="w-full sm:flex-1 py-2.5 px-5 bg-[#0F172A] hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition shadow-sm disabled:opacity-50">{saving ? 'Memproses...' : 'Simpan Perubahan'}</button>
+            <button type="submit" disabled={saving || form.status === user.status} className="w-full sm:flex-1 py-2.5 px-5 bg-[#0F172A] hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">{saving ? 'Memproses...' : 'Simpan Status'}</button>
             <button type="button" onClick={() => setShowDeleteModal(true)} className="w-full sm:w-auto py-2.5 px-5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/60 font-bold rounded-xl text-xs transition">Hapus Permanen</button>
           </div>
         </form>

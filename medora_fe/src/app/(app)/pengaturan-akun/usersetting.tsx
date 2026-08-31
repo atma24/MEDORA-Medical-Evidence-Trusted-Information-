@@ -53,13 +53,16 @@ export default function UserPengaturanAkunPage() {
     bio: '',
   });
 
-  // Fetch Data User dari Backend
+    // Fetch Data User dari Backend + status 2FA (Cache, tanpa tabel)
+  const [twoFactorMethod, setTwoFactorMethod] = useState('email');
+  const [otpCode, setOtpCode] = useState('');
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [isVerifying2FA, setIsVerifying2FA] = useState(false);
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await api.get('/me'); // PERUBAHAN: '/user' menjadi '/me'
+        const response = await api.get('/me');
         const user = response.data;
-        
         setFormData({
           nama: user.name || '',
           email: user.email || '',
@@ -71,10 +74,73 @@ export default function UserPengaturanAkunPage() {
       } finally {
         setIsLoading(false);
       }
+      try {
+        const s = await api.get('/2fa/status');
+        setIs2FAEnabled(!!s.data.enabled);
+        if (s.data.method) setTwoFactorMethod(s.data.method);
+      } catch {}
     };
-
     fetchUserData();
   }, []);
+
+  const handleToggle2FA = async () => {
+    if (is2FAEnabled) {
+      setIsVerifying2FA(true);
+      try {
+        await api.delete('/2fa');
+        setIs2FAEnabled(false);
+        setShowOtpInput(false);
+        triggerSuccessToast('2FA dinonaktifkan.');
+      } catch (e: any) {
+        setErrorMsg(e.response?.data?.message || 'Gagal menonaktifkan 2FA.');
+      } finally { setIsVerifying2FA(false); }
+    } else {
+      setIsVerifying2FA(true);
+      setErrorMsg('');
+      try {
+        const res = await api.post('/2fa/setup');
+        const code = (res.data as any)?.debug_code || (res.data as any)?.code;
+        setShowOtpInput(true);
+        if (code) {
+          triggerSuccessToast(`Kode OTP: ${code} (cek inbox/spam — ${formData.email})`);
+          setErrorMsg(`Kode OTP (dev): ${code} — silakan input di bawah. Jika email tidak masuk, pakai kode ini.`);
+        } else {
+          triggerSuccessToast('Kode OTP dikirim ke email Anda. Cek inbox/spam.');
+        }
+      } catch (e: any) {
+        setErrorMsg(e.response?.data?.message || 'Gagal mengirim OTP.');
+      } finally { setIsVerifying2FA(false); }
+    }
+  };
+  const handleConfirm2FA = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!otpCode.trim() || otpCode.length !== 6) { setErrorMsg('Kode OTP harus 6 digit.'); return; }
+    setIsVerifying2FA(true);
+    setErrorMsg('');
+    try {
+      await api.post('/2fa/confirm', { code: otpCode });
+      setIs2FAEnabled(true);
+      setShowOtpInput(false);
+      setOtpCode('');
+      setErrorMsg('');
+      triggerSuccessToast('2FA Email berhasil diaktifkan!');
+    } catch (e:any) { setErrorMsg(e.response?.data?.message || 'Kode salah/kadaluarsa. Coba kirim ulang.'); }
+    finally { setIsVerifying2FA(false); }
+  };
+  const handleResendOtp = async () => {
+    setIsVerifying2FA(true); setErrorMsg('');
+    try {
+      const res = await api.post('/2fa/setup');
+      const code = (res.data as any)?.debug_code || (res.data as any)?.code;
+      if (code) {
+        triggerSuccessToast(`Kode baru: ${code}`);
+        setErrorMsg(`Kode baru (dev): ${code}`);
+      } else {
+        triggerSuccessToast('Kode baru dikirim ke email.');
+      }
+    } catch (e:any) { setErrorMsg(e.response?.data?.message || 'Gagal kirim ulang.'); }
+    finally { setIsVerifying2FA(false); }
+  };
 
   const triggerSuccessToast = (message: string) => {
     setToastMessage(message);
@@ -298,22 +364,29 @@ export default function UserPengaturanAkunPage() {
                   <div className="flex items-center justify-between bg-[#F8FAFC] p-5 rounded-xl border border-gray-100 mb-4 transition-all">
                     <div>
                       <p className="text-[14px] font-bold text-slate-800">Autentikasi Dua Faktor (2FA)</p>
-                      <p className="text-[12px] text-gray-500 mt-1">Tingkatkan keamanan akun dengan verifikasi dua langkah.</p>
+                      <p className="text-[12px] text-gray-500 mt-1">Kode OTP via Email (tanpa tabel, via Cache) — minimal.</p>
                     </div>
-                    <ToggleSwitch checked={is2FAEnabled} disabled={isSaving} onChange={() => setIs2FAEnabled(!is2FAEnabled)} />
+                    <ToggleSwitch checked={is2FAEnabled} disabled={isSaving || isVerifying2FA} onChange={handleToggle2FA} />
                   </div>
-                  
+
+                  {showOtpInput && !is2FAEnabled && (
+                    <div className="bg-white border border-amber-200 rounded-xl p-5 space-y-3 animate-in fade-in">
+                      <p className="text-[13px] font-bold text-amber-800">Masukkan Kode OTP Email</p>
+                      <p className="text-[12px] text-gray-500">Kode 6-digit telah dikirim ke {formData.email}. Berlaku 10 menit. Cek spam jika tidak masuk.</p>
+                      <div className="flex gap-3">
+                        <input type="text" inputMode="numeric" maxLength={6} placeholder="123456" value={otpCode} onChange={e=>setOtpCode(e.target.value.replace(/\D/g,''))} className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] tracking-widest text-center font-bold bg-white text-slate-800 placeholder:text-gray-400 focus:border-[#253E6B] outline-none" autoFocus />
+                        <button type="button" disabled={isVerifying2FA || otpCode.length!==6} onClick={handleConfirm2FA} className="px-5 py-2.5 bg-[#0A1B3F] text-white rounded-lg text-[13px] font-bold hover:bg-[#152a5a] disabled:opacity-60">{isVerifying2FA ? 'Memverifikasi...' : 'Verifikasi'}</button>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button type="button" disabled={isVerifying2FA} onClick={handleResendOtp} className="text-[12px] text-[#1E3A8A] font-bold hover:underline">Kirim ulang OTP</button>
+                        <button type="button" onClick={()=>{ setShowOtpInput(false); setOtpCode(''); setErrorMsg(''); }} className="text-[12px] text-gray-500 hover:text-slate-700">Batal</button>
+                      </div>
+                    </div>
+                  )}
                   {is2FAEnabled && (
-                    <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4 animate-in fade-in slide-in-from-top-2">
-                      <p className="text-[13px] font-bold text-slate-700">Pilih Metode 2FA:</p>
-                      <label className="flex items-center space-x-3 cursor-pointer group">
-                        <input type="radio" name="2fa_method" defaultChecked className="w-4 h-4 text-[#1E3A8A] border-gray-300 focus:ring-[#1E3A8A]" />
-                        <span className="text-[13.5px] text-slate-700 font-medium group-hover:text-[#1E3A8A]">Kirim kode OTP via SMS ke {formData.telepon || 'Nomor HP'}</span>
-                      </label>
-                      <label className="flex items-center space-x-3 cursor-pointer group">
-                        <input type="radio" name="2fa_method" className="w-4 h-4 text-[#1E3A8A] border-gray-300 focus:ring-[#1E3A8A]" />
-                        <span className="text-[13.5px] text-slate-700 font-medium group-hover:text-[#1E3A8A]">Aplikasi Authenticator (Google Auth / Authy)</span>
-                      </label>
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 animate-in fade-in">
+                      <p className="text-[13px] font-bold text-emerald-800">✓ 2FA Email Aktif</p>
+                      <p className="text-[12px] text-emerald-700 mt-1">Login berikutnya akan meminta kode 6-digit dari email {formData.email}.</p>
                     </div>
                   )}
                 </div>

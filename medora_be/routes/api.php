@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ClaimController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\ReviewerApprovalController;
 use App\Http\Controllers\Api\SpecialityController;
+use App\Http\Controllers\Api\TwoFactorController;
 use Illuminate\Support\Facades\Route;
 
 // ==============================
@@ -20,6 +21,9 @@ Route::get('/auth/google/callback', [AuthController::class, 'googleCallback'])->
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
+
+// 2FA login step-2 (public, pakai temp_token tanpa auth)
+Route::post('/2fa/verify', [TwoFactorController::class, 'verifyLogin'])->middleware('throttle:5,1');
 
 // Public: daftar bidang keahlian (dibutuhkan di halaman register)
 Route::get('/specialities', [SpecialityController::class, 'index']);
@@ -37,6 +41,12 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::put('/password', [AuthController::class, 'updatePassword']);
     Route::delete('/profile', [AuthController::class, 'destroyAccount']);
+
+    // 2FA Email via Cache (tanpa tabel) — minimal
+    Route::get('/2fa/status', [TwoFactorController::class, 'status']);
+    Route::post('/2fa/setup', [TwoFactorController::class, 'setup']);
+    Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm']);
+    Route::delete('/2fa', [TwoFactorController::class, 'disable']);
 
     // ==============================
     // USER Routes (klaim)

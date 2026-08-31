@@ -177,15 +177,15 @@ const isActive = (path: string) => {
           </div>
 
           <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-3 text-right">
+            <Link href="/pengaturan-akun" title="Buka Pengaturan Profil" aria-label="Buka pengaturan profil" className="flex items-center space-x-3 text-right rounded-xl px-2 py-1.5 hover:bg-gray-50 transition cursor-pointer group">
               <div>
-                <p className="text-sm font-bold text-gray-800">{userData?.name || 'User'}</p>
+                <p className="text-sm font-bold text-gray-800 group-hover:text-[#1E3A8A] transition">{userData?.name || 'User'}</p>
                 <p className="text-xs text-gray-500">{userData?.email || 'email@domain.com'}</p>
               </div>
-              <div className="w-10 h-10 bg-[#1E3A8A] text-white font-bold rounded-full flex items-center justify-center overflow-hidden shadow-sm uppercase">
+              <div className="w-10 h-10 bg-[#1E3A8A] text-white font-bold rounded-full flex items-center justify-center overflow-hidden shadow-sm uppercase group-hover:ring-2 group-hover:ring-[#1E3A8A]/20 transition">
                 {userData?.name ? userData.name.charAt(0) : 'U'}
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 

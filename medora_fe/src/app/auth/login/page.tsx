@@ -79,6 +79,16 @@ export default function LoginUI() {
                 password: data.password,
             });
             
+            // Jika 2FA Email aktif (via Cache), BE return requires_2fa
+            if ((response.data as any).requires_2fa) {
+                const { temp_token, method } = response.data as any;
+                sessionStorage.setItem('medora_2fa_temp', temp_token);
+                sessionStorage.setItem('medora_2fa_email', data.email);
+                sessionStorage.setItem('medora_2fa_remember', data.remember_me ? '1' : '0');
+                router.push(`/auth/2fa?method=${method || 'email'}`);
+                return;
+            }
+
             const { token, user } = response.data;
 
             // Logika Remember Me & Simpan Role (bersihkan storage lawan agar tidak duplikat)
@@ -97,6 +107,8 @@ export default function LoginUI() {
                 localStorage.removeItem('medora_user');
                 localStorage.removeItem('medora_role');
             }
+            sessionStorage.removeItem('medora_2fa_temp');
+            sessionStorage.removeItem('medora_2fa_email');
 
             // Redirect seragam ke Dashboard (Nanti AppLayout yang atur menu berdasarkan Role)
             router.push('/dashboard');
@@ -224,10 +236,11 @@ export default function LoginUI() {
                                     <input 
                                         type="email" 
                                         placeholder="nama@email.com" 
-                                        className={`pl-10 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] transition ${fieldErrors.email ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
+                                        className={`pl-10 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] bg-white text-slate-800 placeholder:text-gray-400 transition ${fieldErrors.email ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
                                         value={data.email}
                                         onChange={handleEmailChange} 
                                         disabled={isSubmitting}
+                                        autoComplete="email"
                                     />
                                 </div>
                                 {fieldErrors.email && <p className="text-red-500 text-[10px] mt-1 pl-1 font-medium">{fieldErrors.email}</p>}
@@ -243,10 +256,11 @@ export default function LoginUI() {
                                     <input 
                                         type={showPassword ? "text" : "password"} 
                                         placeholder="••••••••" 
-                                        className={`pl-9 pr-10 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] transition ${fieldErrors.password ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
+                                        className={`pl-9 pr-10 w-full border rounded-xl py-2.5 focus:outline-none focus:ring-2 text-[12.5px] bg-white text-slate-800 placeholder:text-gray-400 transition ${fieldErrors.password ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-[#1c2d5a]'}`}
                                         value={data.password}
                                         onChange={handlePasswordChange} 
                                         disabled={isSubmitting}
+                                        autoComplete="current-password"
                                     />
                                     <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center">
                                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-600 focus:outline-none" disabled={isSubmitting}>
@@ -276,7 +290,7 @@ export default function LoginUI() {
                                         Ingat saya
                                     </label>
                                 </div>
-                                <Link href="#" className="text-[11.5px] font-bold text-[#1c2d5a] hover:underline">
+                                <Link href="/auth/forgot-password" className="text-[11.5px] font-bold text-[#1c2d5a] hover:underline">
                                     Lupa Kata Sandi?
                                 </Link>
                             </div>
