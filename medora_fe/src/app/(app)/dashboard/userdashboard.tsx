@@ -16,6 +16,8 @@ interface Claim {
   detail: string; // Ini menampung Detail
   status: string;
   review_verdict: string | null;
+  trust_assessment?: { assessment: string; trust_score: number } | null;
+  trustAssessment?: { assessment: string; trust_score: number } | null;
 }
 
 export default function UserDashboard() {
@@ -44,10 +46,12 @@ export default function UserDashboard() {
   }, []);
 
   // Hitung Statistik Dinamis
+  const isTervalidasi = (c: Claim) => (c.status === 'REVIEWED' && c.review_verdict === 'FACT') || c.status === 'ANALYZED';
+  const isKeliru = (c: Claim) => c.status === 'REVIEWED' && c.review_verdict === 'HOAX';
   const totalKlaim = claims.length;
-  const klaimTerverifikasi = claims.filter(c => c.status === 'REVIEWED' && c.review_verdict === 'FACT').length;
-  const klaimMenunggu = claims.filter(c => ['PENDING', 'ANALYZED', 'REVIEW_NEEDED'].includes(c.status)).length;
-  const klaimKeliru = claims.filter(c => c.status === 'REVIEWED' && c.review_verdict === 'HOAX').length; // Opsional jika ingin ditampilkan
+  const klaimTerverifikasi = claims.filter(c => isTervalidasi(c)).length;
+  const klaimMenunggu = claims.filter(c => ['PENDING', 'REVIEW_NEEDED'].includes(c.status)).length;
+  const klaimKeliru = claims.filter(c => isKeliru(c)).length; // Opsional jika ingin ditampilkan
 
   // Helper untuk format tanggal
   const formatDate = (dateString: string) => {
@@ -68,6 +72,21 @@ export default function UserDashboard() {
       return (
         <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-50 text-red-700 rounded-full text-xs font-bold border border-red-200">
           <IconKeliruStatus className="w-3.5 h-3.5" /> Keliru
+        </span>
+      );
+    }
+    if (claim.status === 'ANALYZED') {
+      const assessment = (claim as any).trust_assessment?.assessment ?? (claim as any).trustAssessment?.assessment;
+      if (assessment === 'Misinformasi') {
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-50 text-red-700 rounded-full text-xs font-bold border border-red-200">
+            <IconKeliruStatus className="w-3.5 h-3.5" /> Keliru
+          </span>
+        );
+      }
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200">
+          <IconTervalidasiStatus className="w-3.5 h-3.5" /> Tervalidasi
         </span>
       );
     }

@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:USER')->group(function () {
         Route::get('/claims', [ClaimController::class, 'index']);
         Route::post('/claims', [ClaimController::class, 'store']);
+        Route::delete('/claims/{claim}', [ClaimController::class, 'destroy']);
     });
 
     // ==============================

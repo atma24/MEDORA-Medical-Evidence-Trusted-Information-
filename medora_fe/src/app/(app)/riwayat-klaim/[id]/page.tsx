@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { 
   IconTervalidasiStatus, IconKeliruStatus, IconTinjauanStatus 
@@ -10,11 +10,14 @@ import {
 
 export default function DetailKlaimPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id; // Mendapatkan id dinamis dari URL [id]
 
   const [claim, setClaim] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -53,17 +56,21 @@ export default function DetailKlaimPage() {
 
   // --- LOGIKA MENENTUKAN STATUS & TAMPILAN DARI BACKEND ---
   const isReviewed = claim.status === 'REVIEWED';
+  const isAnalyzed = claim.status === 'ANALYZED';
   const verdict = claim.review_verdict; // 'FACT' atau 'HOAX'
+  const trustAssessment = claim.trust_assessment ?? claim.trustAssessment;
+  const isAutoTervalidasi = isAnalyzed && (trustAssessment?.assessment === 'Terverifikasi' || (trustAssessment?.trust_score ?? 0) > 75);
+  const isAutoKeliru = isAnalyzed && trustAssessment?.assessment === 'Misinformasi';
 
   // Badge Status
   const renderBadge = () => {
-    if (isReviewed && verdict === 'FACT') {
+    if ((isReviewed && verdict === 'FACT') || isAutoTervalidasi) {
       return (
         <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-sm font-bold border border-emerald-200 shadow-sm">
           <IconTervalidasiStatus className="w-4 h-4" /> Tervalidasi
         </span>
       );
-    } else if (isReviewed && verdict === 'HOAX') {
+    } else if ((isReviewed && verdict === 'HOAX') || isAutoKeliru) {
       return (
         <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-700 rounded-full text-sm font-bold border border-red-200 shadow-sm">
           <IconKeliruStatus className="w-4 h-4" /> Keliru
@@ -80,14 +87,16 @@ export default function DetailKlaimPage() {
 
   // Konfigurasi Alert Berdasarkan Status
   const getAlertConfig = () => {
-    if (isReviewed && verdict === 'FACT') {
+    if ((isReviewed && verdict === 'FACT') || isAutoTervalidasi) {
       return {
-        title: 'TERVALIDASI SEPENUHNYA',
-        desc: 'Klaim ini telah ditinjau dan divalidasi oleh pakar medis berdasarkan bukti literatur klinis yang valid.',
+        title: isAutoTervalidasi ? 'TERVALIDASI OTOMATIS OLEH SISTEM' : 'TERVALIDASI SEPENUHNYA',
+        desc: isAutoTervalidasi
+          ? `Klaim ini tervalidasi otomatis oleh sistem MEDORA dengan trust score ${trustAssessment?.trust_score?.toFixed(0) ?? ''}% berdasarkan bukti jurnal terpercaya. Tidak memerlukan tinjauan manual.`
+          : 'Klaim ini telah ditinjau dan divalidasi oleh pakar medis berdasarkan bukti literatur klinis yang valid.',
         bg: 'bg-[#ecfdf5]', border: 'border-[#a7f3d0]', iconBg: 'bg-emerald-500', textTitle: 'text-emerald-800', textDesc: 'text-emerald-700',
         iconType: 'fact'
       };
-    } else if (isReviewed && verdict === 'HOAX') {
+    } else if ((isReviewed && verdict === 'HOAX') || isAutoKeliru) {
       return {
         title: 'KELIRU (DISINFORMASI MEDIS)',
         desc: 'Klaim ini dinilai keliru atau tidak terbukti secara medis oleh tim pakar kami.',
@@ -110,6 +119,20 @@ export default function DetailKlaimPage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await api.delete(`/claims/${id}`);
+      router.push('/riwayat-klaim');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || 'Gagal menghapus klaim.';
+      setErrorMsg(msg);
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -137,6 +160,13 @@ export default function DetailKlaimPage() {
         </div>
         
         <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-[13px] font-bold hover:bg-red-50 transition flex items-center shadow-sm"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            Hapus
+          </button>
           <button className="px-4 py-2 bg-white border border-gray-300 text-[#253E6B] rounded-lg text-[13px] font-bold hover:bg-gray-50 transition flex items-center shadow-sm">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
             Simpan Artikel
@@ -215,28 +245,50 @@ export default function DetailKlaimPage() {
           {/* Info Reviewer */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-5">DIVALIDASI OLEH</p>
-            <div className="flex items-start space-x-4 mb-5">
-              <div className="w-12 h-12 rounded-full bg-gray-100 shrink-0 overflow-hidden border border-gray-200 flex items-center justify-center font-bold text-[#253E6B]">
-                {claim.reviewer ? claim.reviewer.name.charAt(0) : 'M'}
-              </div>
-              <div>
-                <h4 className="text-[14px] font-bold text-[#0A1B3F] mb-1">
-                  {claim.reviewer ? claim.reviewer.name : 'Menunggu Penugasan'}
-                </h4>
-                <p className="text-[12px] text-gray-500 mb-2">
-                  {claim.reviewer?.speciality ? claim.reviewer.speciality.name : 'Tim Pakar Medis Medora'}
-                </p>
-                {isReviewed && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10.5px] font-bold border border-emerald-100">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                    Verified Reviewer
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="pt-4 border-t border-gray-100">
-              <p className="text-[12px] text-gray-500 font-medium">Status Review: <span className="text-slate-800 font-bold ml-1">{claim.status}</span></p>
-            </div>
+            {isAutoTervalidasi || isAutoKeliru ? (
+              <>
+                <div className="flex items-start space-x-4 mb-5">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 shrink-0 overflow-hidden border border-emerald-200 flex items-center justify-center font-bold text-emerald-700">
+                    ✓
+                  </div>
+                  <div>
+                    <h4 className="text-[14px] font-bold text-[#0A1B3F] mb-1">Sistem MEDORA (Auto-validasi)</h4>
+                    <p className="text-[12px] text-gray-500 mb-2">Trust Score {trustAssessment?.trust_score?.toFixed(0) ?? '-'}% • {trustAssessment?.assessment ?? '-'}</p>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-[10.5px] font-bold border border-blue-100">
+                      Auto-validated
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-gray-100">
+                  <p className="text-[12px] text-gray-500 font-medium">Status Review: <span className="text-emerald-700 font-bold ml-1">Tervalidasi Otomatis</span></p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-start space-x-4 mb-5">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 shrink-0 overflow-hidden border border-gray-200 flex items-center justify-center font-bold text-[#253E6B]">
+                    {claim.reviewer ? claim.reviewer.name.charAt(0) : 'M'}
+                  </div>
+                  <div>
+                    <h4 className="text-[14px] font-bold text-[#0A1B3F] mb-1">
+                      {claim.reviewer ? claim.reviewer.name : 'Menunggu Penugasan'}
+                    </h4>
+                    <p className="text-[12px] text-gray-500 mb-2">
+                      {claim.reviewer?.speciality ? claim.reviewer.speciality.name : 'Tim Pakar Medis Medora'}
+                    </p>
+                    {isReviewed && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10.5px] font-bold border border-emerald-100">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                        Verified Reviewer
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-gray-100">
+                  <p className="text-[12px] text-gray-500 font-medium">Status Review: <span className="text-slate-800 font-bold ml-1">{claim.status}</span></p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Bukti Jurnal Ilmiah (Evidences dari relasi claimEvidences) */}
@@ -271,6 +323,50 @@ export default function DetailKlaimPage() {
         </div>
 
       </div>
+
+      {/* Modal Konfirmasi Hapus */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 md:p-7">
+            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-[18px] font-bold text-[#0A1B3F] text-center mb-2">Hapus Klaim?</h3>
+            <p className="text-[14px] text-gray-500 text-center leading-relaxed mb-6">
+              Klaim <span className="font-bold text-gray-700">#CLM-{claim.id}</span> akan dihapus permanen beserta data analisisnya. Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 px-5 py-2.5 border border-gray-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 px-5 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    Menghapus...
+                  </>
+                ) : (
+                  'Ya, Hapus'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

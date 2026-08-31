@@ -102,4 +102,17 @@ class ClaimController extends Controller
             'claim' => $claim->fresh()->load(['trustAssessment', 'claimEvidences.evidence', 'reviewer']),
         ]);
     }
+
+    public function destroy(Request $request, Claim $claim): JsonResponse
+    {
+        abort_unless(
+            $request->user()->id === $claim->user_id,
+            403,
+            'Anda tidak memiliki akses untuk menghapus klaim ini.'
+        );
+
+        $claim->delete();
+
+        return response()->json(['message' => 'Klaim berhasil dihapus.']);
+    }
 }
