@@ -38,7 +38,6 @@ interface ReportData {
   top_topics: { topic: string; count: number; growth_pct: number }[];
 }
 
-// Mapping label filter frontend -> param period backend
 const PERIOD_MAP: Record<string, string> = {
   'Hari Ini': 'today',
   'Minggu Ini': 'week',
@@ -48,21 +47,17 @@ const PERIOD_MAP: Record<string, string> = {
 
 // ==================== Helpers ====================
 
-// Generate smooth bezier path (Catmull-Rom to Bezier)
+// Perhitungan Kurva Halus (Tidak melampaui koordinat)
 function buildSmoothPath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return '';
   if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
   let d = `M ${points[0].x},${points[0].y}`;
+  
   for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i - 1] ?? points[i];
     const p1 = points[i];
     const p2 = points[i + 1];
-    const p3 = points[i + 2] ?? p2;
-    const cp1x = p1.x + (p2.x - p0.x) / 6;
-    const cp1y = p1.y + (p2.y - p0.y) / 6;
-    const cp2x = p2.x - (p3.x - p1.x) / 6;
-    const cp2y = p2.y - (p3.y - p1.y) / 6;
-    d += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`;
+    const cpX = (p2.x - p1.x) * 0.4;
+    d += ` C ${p1.x + cpX},${p1.y} ${p2.x - cpX},${p2.y} ${p2.x},${p2.y}`;
   }
   return d;
 }
@@ -71,7 +66,6 @@ function formatNumber(n: number): string {
   return n.toLocaleString('id-ID');
 }
 
-// Format rata-rata respon dari menit ke display jam/menit
 function formatResponse(minutes: number): { value: string; unit: string } | null {
   if (!minutes || minutes <= 0) return null;
   if (minutes < 60) return { value: `${minutes}`, unit: 'Menit' };
@@ -86,8 +80,8 @@ export default function LaporanAnalitikPage() {
   const [report, setReport] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [activeIdx, setActiveIdx] = useState(0);
 
-  // Fetch data laporan saat filter berubah
   useEffect(() => {
     const fetchReport = async () => {
       setIsLoading(true);
@@ -113,54 +107,68 @@ export default function LaporanAnalitikPage() {
     fetchReport();
   }, [filterOption]);
 
+  // Set ulang indeks aktif ke titik data terbaru (hari ini/bulan ini)
+  useEffect(() => {
+    if (report?.trend && report.trend.length > 0) {
+      setActiveIdx(report.trend.length - 1);
+    }
+  }, [report]);
+
   // ==== Derivasi data chart dari report.trend ====
   const trendItems = report?.trend ?? [];
   const maxValue = Math.max(1, ...trendItems.map((t) => t.value));
+  
   const chartPoints = trendItems.map((t, i) => ({
     x: trendItems.length > 1 ? (i / (trendItems.length - 1)) * 500 : 250,
-    y: 140 - (t.value / maxValue) * 110, // mapping value ke area 30..140
+    y: 140 - (t.value / maxValue) * 110,
     label: t.label,
     value: t.value,
-    isLast: i === trendItems.length - 1,
   }));
 
-  const [activeIdx, setActiveIdx] = useState(0);
   const activePoint = chartPoints[Math.min(activeIdx, Math.max(0, chartPoints.length - 1))];
 
-  const smoothPath = buildSmoothPath(chartPoints);
-  const areaPath =
-    chartPoints.length > 0 && smoothPath
-      ? `${smoothPath} L ${chartPoints[chartPoints.length - 1].x.toFixed(2)},150 L ${chartPoints[0].x.toFixed(2)},150 Z`
-      : '';
+  // Logika pembentukan Garis dan Area (termasuk penanganan jika data cuma 1 titik)
+  let smoothPath = '';
+  let areaPath = '';
+  
+  if (chartPoints.length > 1) {
+    smoothPath = buildSmoothPath(chartPoints);
+    areaPath = `${smoothPath} L ${chartPoints[chartPoints.length - 1].x.toFixed(2)},150 L ${chartPoints[0].x.toFixed(2)},150 Z`;
+  } else if (chartPoints.length === 1) {
+    // Jika data cuma 1 (misal: "Minggu Ini" baru ada Senin), gambar area berbentuk gunung
+    smoothPath = ''; 
+    areaPath = `M 0,150 L 250,${chartPoints[0].y} L 500,150 Z`;
+  }
 
-  // Label sumbu-X bawah chart (maksimal 7 label merata)
-  const bottomLabels: string[] = [];
+  // Label sumbu-X bawah chart (maksimal 7 label agar rapi)
+  const maxLabels = 7;
+  const labelIndices: number[] = [];
   if (trendItems.length > 0) {
-    const maxLabels = 7;
     if (trendItems.length <= maxLabels) {
-      trendItems.forEach((t) => bottomLabels.push(t.label));
+      trendItems.forEach((_, i) => labelIndices.push(i));
     } else {
       const step = (trendItems.length - 1) / (maxLabels - 1);
       for (let i = 0; i < maxLabels; i++) {
-        bottomLabels.push(trendItems[Math.round(i * step)].label);
+        labelIndices.push(Math.round(i * step));
       }
     }
   }
 
-  // Prefix label tooltip sesuai periode
+  // Perbaikan Tooltip Labeling agar menyesuaikan Filter yang dipilih
   const periodKey = PERIOD_MAP[filterOption] ?? 'month';
   const tooltipLabelFor = (p: (typeof chartPoints)[number]) => {
-    if (p.isLast) return 'Hari Ini';
     switch (periodKey) {
-      case 'month': return `Hari ${p.label}`;
+      case 'today': return `Jam ${p.label}`;
+      case 'week': return `${p.label}`; // cth: 'Senin'
+      case 'month': return `Tgl ${p.label}`;
       case 'year': return `Bulan ${p.label}`;
-      default: return p.label; // hari (week) / jam (today)
+      default: return p.label;
     }
   };
 
   // ==== Data distribusi donut ====
   const dist = report?.distribution;
-  const CIRC = 2 * Math.PI * 40; // keliling lingkaran r=40 => 251.33
+  const CIRC = 2 * Math.PI * 40; 
   const segFactPct = dist?.fact_pct ?? 0;
   const segOtherPct = dist?.other_pct ?? 0;
   const segHoaxPct = dist?.hoax_pct ?? 0;
@@ -197,7 +205,7 @@ export default function LaporanAnalitikPage() {
         </div>
         
         {/* Dropdown Filter Kalender */}
-        <div className="relative">
+        <div className="relative z-50">
           <button 
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className="flex items-center space-x-2 border border-gray-300 px-4 py-2.5 rounded-lg text-[13px] text-slate-700 font-bold hover:bg-gray-50 transition shadow-sm bg-white"
@@ -212,7 +220,7 @@ export default function LaporanAnalitikPage() {
           </button>
 
           {isFilterOpen && (
-            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1.5 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 animate-in fade-in slide-in-from-top-2">
               {['Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini'].map((opt) => (
                 <button 
                   key={opt}
@@ -230,7 +238,6 @@ export default function LaporanAnalitikPage() {
         </div>
       </div>
 
-      {/* Info Loading / Error */}
       {isLoading && (
         <div className="bg-[#EEF2FF] border border-[#C7D2FE] text-[#1E3A8A] text-[13px] font-semibold rounded-xl px-4 py-3 mb-6">
           Memuat data laporan untuk periode {filterOption.toLowerCase()}...
@@ -317,13 +324,15 @@ export default function LaporanAnalitikPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         
         {/* Kiri: Tren Klaim */}
-        <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-200 flex flex-col relative">
+        <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-200 flex flex-col relative z-0">
           <h3 className="text-[16px] font-bold text-slate-800 mb-6">
             {periodKey === 'today' ? 'Tren Klaim Per Jam' : periodKey === 'week' ? 'Tren Klaim Mingguan' : periodKey === 'year' ? 'Tren Klaim Bulanan' : 'Tren Klaim Harian'}
           </h3>
           
           {chartPoints.length > 0 && activePoint ? (
             <div className="relative flex-1 w-full h-[220px]">
+              
+              {/* Tooltip Dinamis */}
               <div 
                 className="absolute bg-[#001D5C] text-white text-[11px] font-bold px-3 py-1.5 rounded flex items-center space-x-2 transition-all duration-300 ease-out pointer-events-none z-10 shadow-md"
                 style={{
@@ -347,23 +356,49 @@ export default function LaporanAnalitikPage() {
                 <line x1="0" y1="100" x2="500" y2="100" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4 4" />
                 <line x1="0" y1="50" x2="500" y2="50" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4 4" />
                 
-                {areaPath && <path d={areaPath} fill="url(#gradientLine)" />}
-                {smoothPath && <path d={smoothPath} fill="none" stroke="#1E3A8A" strokeWidth="3" strokeLinecap="round" />}
+                {areaPath && <path d={areaPath} fill="url(#gradientLine)" pointerEvents="none" />}
+                {smoothPath && <path d={smoothPath} fill="none" stroke="#1E3A8A" strokeWidth="3" strokeLinecap="round" pointerEvents="none" />}
                 
-                {chartPoints.map((pt, i) => (
-                  <g key={i} onMouseEnter={() => setActiveIdx(i)} className="cursor-pointer">
-                    <circle cx={pt.x} cy={pt.y} r="25" fill="transparent" />
-                    <circle cx={pt.x} cy={pt.y} r={activeIdx === i ? 4 : 2} fill={activeIdx === i ? "#1E3A8A" : "#94A3B8"} className="transition-all duration-300" />
-                    {activeIdx === i && (
-                      <circle cx={pt.x} cy={pt.y} r="10" fill="#1E3A8A" fillOpacity="0.2" className="animate-pulse" />
-                    )}
-                  </g>
-                ))}
+                {chartPoints.map((pt, i) => {
+                  // Pembagian lebar sentuhan per titik
+                  const segmentWidth = chartPoints.length > 1 ? 500 / (chartPoints.length - 1) : 500;
+                  return (
+                    <g key={i} onMouseEnter={() => setActiveIdx(i)} className="cursor-pointer outline-none">
+                      {/* Area Hover Interaktif */}
+                      <rect 
+                        x={pt.x - segmentWidth / 2} 
+                        y={0} 
+                        width={segmentWidth} 
+                        height={150} 
+                        fill="transparent" 
+                      />
+                      {/* Titik Data */}
+                      <circle cx={pt.x} cy={pt.y} r={activeIdx === i ? 4 : 2} fill={activeIdx === i ? "#1E3A8A" : "#94A3B8"} className="transition-all duration-300" pointerEvents="none" />
+                      {activeIdx === i && (
+                        <circle cx={pt.x} cy={pt.y} r="10" fill="#1E3A8A" fillOpacity="0.2" className="animate-pulse" pointerEvents="none" />
+                      )}
+                    </g>
+                  );
+                })}
               </svg>
               
-              <div className="absolute bottom-0 w-full flex justify-between text-[11px] font-semibold text-gray-400 px-1 select-none">
-                {bottomLabels.map((l, i) => <span key={i}>{l}</span>)}
+              {/* Teks Label X-Axis */}
+              <div className="absolute bottom-0 left-0 w-full font-semibold text-gray-400 select-none text-[10px]" style={{ height: '16px' }}>
+                {labelIndices.map((idx) => {
+                  const pt = chartPoints[idx];
+                  if (!pt) return null;
+                  return (
+                    <span 
+                      key={idx} 
+                      className="absolute transform -translate-x-1/2 whitespace-nowrap top-2"
+                      style={{ left: `${(pt.x / 500) * 100}%` }}
+                    >
+                      {pt.label}
+                    </span>
+                  );
+                })}
               </div>
+
             </div>
           ) : (
             <div className="flex-1 h-[220px] flex items-center justify-center text-gray-400 text-[13px] font-medium">

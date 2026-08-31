@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClaimController;
 use App\Http\Controllers\Api\ReviewController;
@@ -69,6 +70,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // ADMIN Routes
     // ==============================
     Route::middleware('role:ADMIN')->prefix('admin')->group(function () {
+        Route::get('/stats', [AdminUserController::class, 'stats']);
+        Route::get('/users', [AdminUserController::class, 'index']);
+        Route::get('/users/{user}', [AdminUserController::class, 'show']);
+        Route::put('/users/{user}', [AdminUserController::class, 'update']);
+        Route::delete('/users/{user}', [AdminUserController::class, 'destroy']);
+
+        Route::get('/reviewers', [ReviewerApprovalController::class, 'index']);
         Route::get('/reviewers/pending', [ReviewerApprovalController::class, 'pending']);
         Route::post('/reviewers/{user}/approve', [ReviewerApprovalController::class, 'approve']);
         Route::post('/reviewers/{user}/reject', [ReviewerApprovalController::class, 'reject']);

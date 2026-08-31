@@ -7,9 +7,25 @@ use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ReviewerApprovalController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $query = User::where('role', Role::REVIEWER)->with('speciality')->orderByDesc('created_at');
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function ($w) use ($q) {
+                $w->where('name', 'like', "%{$q}%")->orWhere('email', 'like', "%{$q}%");
+            });
+        }
+        return response()->json($query->paginate((int) $request->input('per_page', 15)));
+    }
+
     public function pending(): JsonResponse
     {
         return response()->json(

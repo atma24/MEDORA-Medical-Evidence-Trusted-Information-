@@ -4,16 +4,17 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { 
-  IconTervalidasiStatus, IconKeliruStatus, IconTinjauanStatus 
+  IconTervalidasiStatus, IconKeliruStatus, IconTinjauanStatus,
+  IconTinjauanCardReviewer
 } from '@/components/Icons';
 
-// Interface disesuaikan dengan penambahan kolom 'detail' di backend
 interface Claim {
   id: number;
   created_at: string;
-  text: string;   // Ini menyimpan Topik
-  detail: string; // Ini menyimpan Detail
+  text: string;
+  detail: string;
   status: string;
+  review_verdict?: string | null;
 }
 
 export default function ReviewerDashboard() {
@@ -40,6 +41,9 @@ export default function ReviewerDashboard() {
   }, []);
 
   const totalMenunggu = claimsQueue.length;
+  // Placeholder untuk statistik riwayat (disesuaikan dengan API aktual nantinya)
+  const totalTerverifikasi = 8; 
+  const totalKeliru = 3;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -48,71 +52,111 @@ export default function ReviewerDashboard() {
 
   const reviewerName = userData?.name ? `Dr. ${userData.name.split(' ')[0]}` : 'Reviewer';
 
+  // Helper render status
+  const renderStatusBadge = (claim: Claim) => {
+    if (claim.status === 'REVIEWED' && claim.review_verdict === 'FACT') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#E6F7F1] text-[#008053] rounded-full text-[11px] font-semibold">
+          <IconTervalidasiStatus className="w-3.5 h-3.5" /> Tervalidasi
+        </span>
+      );
+    }
+    if (claim.status === 'REVIEWED' && claim.review_verdict === 'HOAX') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FDECEA] text-[#D32F2F] rounded-full text-[11px] font-semibold">
+          <IconKeliruStatus className="w-3.5 h-3.5" /> Keliru
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FFFBEB] text-[#D97706] rounded-full text-[11px] font-semibold">
+        <IconTinjauanStatus className="w-3.5 h-3.5" /> Menunggu Tinjauan
+      </span>
+    );
+  };
+
+  const renderActionButton = (claim: Claim) => {
+    const isPending = !['REVIEWED', 'ANALYZED'].includes(claim.status);
+    if (isPending) {
+      return (
+        <Link href={`/verifikasi/${claim.id}`}>
+          <button className="px-5 py-1.5 bg-[#0B1E46] text-white rounded-md text-xs font-semibold hover:bg-[#152a5a] transition">
+            Tinjau
+          </button>
+        </Link>
+      );
+    }
+    return (
+      <Link href={`/verifikasi/${claim.id}`}>
+        <button className="px-4 py-1.5 bg-white border border-[#0B1E46] text-[#0B1E46] rounded-md text-xs font-semibold hover:bg-slate-50 transition">
+          Lihat Detail
+        </button>
+      </Link>
+    );
+  };
+
   return (
     <div className="max-w-6xl mx-auto py-2">
-      
       {/* Welcome Banner */}
       <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col justify-center mb-8">
-        <h2 className="text-[32px] font-extrabold text-[#253E6B] mb-2 tracking-tight">
+        <h2 className="text-3xl font-bold text-[#1E293B] mb-2 tracking-tight">
           Halo, {reviewerName} 🩺
         </h2>
-        <p className="text-gray-500 text-[15px] max-w-xl leading-relaxed">
+        <p className="text-gray-500 text-sm max-w-xl leading-relaxed">
           Tinjau dan verifikasi pengajuan klaim dari pengguna untuk memastikan keakuratan informasi medis.
         </p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        
-        {/* Card 1: Menunggu Tinjauan */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
-          <div className="flex justify-between items-start mb-6">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Menunggu Tinjauan</p>
-            <div className="w-10 h-10 bg-[#FFFBEB] rounded-xl flex items-center justify-center text-amber-600 shadow-2xs">
-               <IconTinjauanStatus className="w-5 h-5" />
+        {/* Card 1 */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-start mb-4">
+            <p className="text-xs font-semibold text-gray-500">Menunggu Tinjauan</p>
+            <div className="w-8 h-8 rounded-full bg-[#FFFBEB] text-[#D97706] flex items-center justify-center">
+               <IconTinjauanCardReviewer className="w-4 h-4" />
             </div>
           </div>
-          <h3 className="text-[40px] font-extrabold text-slate-800 leading-none">{isLoading ? '...' : totalMenunggu}</h3>
+          <h3 className="text-3xl font-bold text-slate-800">{isLoading ? '...' : totalMenunggu}</h3>
         </div>
         
-        {/* Card 2: Klaim Terverifikasi (Placeholder - Butuh API Riwayat dari Backend) */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between opacity-70">
-          <div className="flex justify-between items-start mb-6">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Riwayat Selesai</p>
-            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-2xs">
-              <IconTervalidasiStatus className="w-5 h-5" />
+        {/* Card 2 */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-start mb-4">
+            <p className="text-xs font-semibold text-gray-500">Klaim Terverifikasi</p>
+            <div className="w-8 h-8 rounded-full bg-[#E6F7F1] text-[#008053] flex items-center justify-center">
+              <IconTervalidasiStatus className="w-4 h-4" />
             </div>
           </div>
-          <h3 className="text-[40px] font-extrabold text-slate-800 leading-none">-</h3>
+          <h3 className="text-3xl font-bold text-slate-800">{totalTerverifikasi}</h3>
         </div>
         
-        {/* Card 3: Klaim Tidak Terbukti (Placeholder) */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between opacity-70">
-          <div className="flex justify-between items-start mb-6">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Kontribusi</p>
-            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-[#243C62] shadow-2xs">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        {/* Card 3 */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-start mb-4">
+            <p className="text-xs font-semibold text-gray-500">Klaim Tidak Terbukti</p>
+            <div className="w-8 h-8 rounded-full bg-[#FDECEA] text-[#D32F2F] flex items-center justify-center">
+              <IconKeliruStatus className="w-4 h-4" />
             </div>
           </div>
-          <h3 className="text-[40px] font-extrabold text-slate-800 leading-none">-</h3>
+          <h3 className="text-3xl font-bold text-slate-800">{totalKeliru}</h3>
         </div>
-
       </div>
 
       {/* Table Container */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="bg-[#F1F4F9] px-6 py-5 flex justify-between items-center border-b border-gray-200">
-          <h3 className="font-bold text-[#253E6B] text-[15px]">Antrean Klaim Terbaru</h3>
-          <Link href="/antrean-klaim" className="text-[13px] text-[#253E6B] font-bold hover:underline">Lihat Semua ›</Link>
+        <div className="bg-[#F8FAFC] px-6 py-4 flex justify-between items-center border-b border-gray-200">
+          <h3 className="font-semibold text-slate-800 text-sm">Antrean Klaim Terbaru</h3>
+          <Link href="/antrean-klaim" className="text-[13px] text-blue-600 font-semibold hover:underline">Lihat Semua ›</Link>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-200 text-[11px] font-bold text-slate-500 uppercase tracking-widest bg-[#FAFBFC]">
+              <tr className="border-b border-gray-200 text-xs font-bold text-gray-500 uppercase bg-white">
                 <th className="px-6 py-4">ID KLAIM</th>
                 <th className="px-6 py-4">TANGGAL</th>
-                <th className="px-6 py-4 w-1/3">TOPIK / KLAIM</th>
+                <th className="px-6 py-4 w-1/3">TOPIK</th>
                 <th className="px-6 py-4 text-center">STATUS</th>
                 <th className="px-6 py-4 text-center">AKSI</th>
               </tr>
@@ -124,25 +168,19 @@ export default function ReviewerDashboard() {
                 </tr>
               ) : claimsQueue.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">Belum ada antrean klaim untuk ditinjau.</td>
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">Belum ada antrean klaim.</td>
                 </tr>
               ) : (
                 claimsQueue.slice(0, 5).map((claim) => (
                   <tr key={claim.id} className="border-b border-gray-100 hover:bg-gray-50/80 transition">
-                    <td className="px-6 py-5 font-bold text-slate-900">#CLM-{claim.id}</td>
-                    <td className="px-6 py-5 text-slate-600 font-medium">{formatDate(claim.created_at)}</td>
-                    <td className="px-6 py-5 text-slate-800 font-medium truncate max-w-xs">{claim.text}</td>
+                    <td className="px-6 py-5 font-semibold text-slate-800">#CLM-{claim.id}</td>
+                    <td className="px-6 py-5 text-gray-500">{formatDate(claim.created_at)}</td>
+                    <td className="px-6 py-5 text-slate-800 truncate max-w-xs">{claim.text}</td>
                     <td className="px-6 py-5 text-center">
-                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-50 text-amber-700 rounded-full text-[11px] font-bold border border-amber-200">
-                        <IconTinjauanStatus className="w-4 h-4" /> Menunggu Tinjauan
-                      </span>
+                      {renderStatusBadge(claim)}
                     </td>
-                    <td className="px-6 py-5 text-center">
-                      <Link href={`/verifikasi/${claim.id}`}>
-                        <button className="px-6 py-2 bg-[#0A1B3F] text-white rounded-lg text-xs font-bold hover:bg-[#152a5a] transition shadow-sm">
-                          Tinjau
-                        </button>
-                      </Link>
+                    <td className="px-6 py-5 text-center flex justify-center">
+                      {renderActionButton(claim)}
                     </td>
                   </tr>
                 ))
@@ -151,7 +189,6 @@ export default function ReviewerDashboard() {
           </table>
         </div>
       </div>
-
     </div>
   );
 }

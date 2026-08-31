@@ -4,14 +4,11 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { 
-  IconTervalidasiStatus, IconKeliruStatus, IconTinjauanStatus 
-} from '@/components/Icons';
 
 export default function DetailKlaimPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id; // Mendapatkan id dinamis dari URL [id]
+  const id = params.id;
 
   const [claim, setClaim] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,7 +21,6 @@ export default function DetailKlaimPage() {
 
     const fetchDetailClaim = async () => {
       try {
-        // Memanggil endpoint GET /claims/{claim} dari ClaimController@show
         const response = await api.get(`/claims/${id}`);
         setClaim(response.data);
       } catch (error) {
@@ -39,75 +35,67 @@ export default function DetailKlaimPage() {
   }, [id]);
 
   if (isLoading) {
-    return <div className="text-center py-20 text-gray-500 font-medium">Memuat detail klaim dari database...</div>;
+    return <div className="text-center py-20 text-gray-400 font-medium text-sm">Memuat detail klaim...</div>;
   }
 
   if (errorMsg || !claim) {
     return (
       <div className="max-w-5xl mx-auto py-10">
         <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl text-center">
-          <p className="font-bold mb-2">Terjadi Kesalahan</p>
-          <p className="text-sm mb-4">{errorMsg || "Klaim tidak ditemukan."}</p>
+          <p className="font-bold mb-2 text-sm">Terjadi Kesalahan</p>
+          <p className="text-xs mb-4">{errorMsg || "Klaim tidak ditemukan."}</p>
           <Link href="/riwayat-klaim" className="text-xs font-bold underline">Kembali ke Riwayat Klaim</Link>
         </div>
       </div>
     );
   }
 
-  // --- LOGIKA MENENTUKAN STATUS & TAMPILAN DARI BACKEND ---
+  // --- LOGIKA MENENTUKAN STATUS DARI BACKEND ---
   const isReviewed = claim.status === 'REVIEWED';
   const isAnalyzed = claim.status === 'ANALYZED';
-  const verdict = claim.review_verdict; // 'FACT' atau 'HOAX'
+  const verdict = claim.review_verdict;
   const trustAssessment = claim.trust_assessment ?? claim.trustAssessment;
   const isAutoTervalidasi = isAnalyzed && (trustAssessment?.assessment === 'Terverifikasi' || (trustAssessment?.trust_score ?? 0) > 75);
   const isAutoKeliru = isAnalyzed && trustAssessment?.assessment === 'Misinformasi';
 
-  // Badge Status
-  const renderBadge = () => {
-    if ((isReviewed && verdict === 'FACT') || isAutoTervalidasi) {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-sm font-bold border border-emerald-200 shadow-sm">
-          <IconTervalidasiStatus className="w-4 h-4" /> Tervalidasi
-        </span>
-      );
-    } else if ((isReviewed && verdict === 'HOAX') || isAutoKeliru) {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-700 rounded-full text-sm font-bold border border-red-200 shadow-sm">
-          <IconKeliruStatus className="w-4 h-4" /> Keliru
-        </span>
-      );
-    } else {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-50 text-amber-700 rounded-full text-sm font-bold border border-amber-200 shadow-sm">
-          <IconTinjauanStatus className="w-4 h-4" /> Menunggu Tinjauan
-        </span>
-      );
-    }
-  };
-
-  // Konfigurasi Alert Berdasarkan Status
+  // Penentuan Banner Alert berdasarkan Data API
   const getAlertConfig = () => {
+    const summaryText = trustAssessment?.summary || claim.review_summary || claim.review_note || '';
+
     if ((isReviewed && verdict === 'FACT') || isAutoTervalidasi) {
+      const title = trustAssessment?.assessment === 'Tervalidasi dengan Catatan'
+        ? 'TERVALIDASI DENGAN CATATAN'
+        : (isAutoTervalidasi ? 'TERVALIDASI OTOMATIS OLEH SISTEM' : 'TERVALIDASI SEPENUHNYA');
+
       return {
-        title: isAutoTervalidasi ? 'TERVALIDASI OTOMATIS OLEH SISTEM' : 'TERVALIDASI SEPENUHNYA',
-        desc: isAutoTervalidasi
-          ? `Klaim ini tervalidasi otomatis oleh sistem MEDORA dengan trust score ${trustAssessment?.trust_score?.toFixed(0) ?? ''}% berdasarkan bukti jurnal terpercaya. Tidak memerlukan tinjauan manual.`
-          : 'Klaim ini telah ditinjau dan divalidasi oleh pakar medis berdasarkan bukti literatur klinis yang valid.',
-        bg: 'bg-[#ecfdf5]', border: 'border-[#a7f3d0]', iconBg: 'bg-emerald-500', textTitle: 'text-emerald-800', textDesc: 'text-emerald-700',
+        title,
+        desc: summaryText || (isAutoTervalidasi
+          ? `Klaim ini tervalidasi otomatis oleh sistem MEDORA dengan trust score ${trustAssessment?.trust_score?.toFixed(0) ?? ''}% berdasarkan bukti jurnal terpercaya.`
+          : 'Klaim ini telah ditinjau dan divalidasi oleh pakar medis berdasarkan bukti literatur klinis yang valid.'),
+        bg: 'bg-[#E6F4EA]',
+        textTitle: 'text-[#137333]',
+        textDesc: 'text-[#1E4620]',
+        iconBg: 'bg-[#137333]',
         iconType: 'fact'
       };
     } else if ((isReviewed && verdict === 'HOAX') || isAutoKeliru) {
       return {
         title: 'KELIRU (DISINFORMASI MEDIS)',
-        desc: 'Klaim ini dinilai keliru atau tidak terbukti secara medis oleh tim pakar kami.',
-        bg: 'bg-red-50', border: 'border-red-200', iconBg: 'bg-red-500', textTitle: 'text-red-800', textDesc: 'text-red-700',
+        desc: summaryText || 'Klaim ini dinilai keliru atau tidak terbukti secara medis berdasarkan peninjauan literatur klinis dan analisis pakar.',
+        bg: 'bg-[#FCE8E6]',
+        textTitle: 'text-[#C5221F]',
+        textDesc: 'text-[#5C1D1B]',
+        iconBg: 'bg-[#C5221F]',
         iconType: 'hoax'
       };
     } else {
       return {
         title: 'MENUNGGU TINJAUAN PAKAR',
-        desc: 'Klaim Anda sedang dalam antrean atau proses analisis sistem dan memerlukan verifikasi manual dari dokter spesialis.',
-        bg: 'bg-amber-50', border: 'border-amber-200', iconBg: 'bg-amber-500', textTitle: 'text-amber-800', textDesc: 'text-amber-700',
+        desc: summaryText || 'Klaim Anda sedang dalam proses analisis dan menunggu verifikasi manual dari tim dokter spesialis.',
+        bg: 'bg-[#FEF7E0]',
+        textTitle: 'text-[#B06000]',
+        textDesc: 'text-[#5F3B00]',
+        iconBg: 'bg-[#B06000]',
         iconType: 'pending'
       };
     }
@@ -115,10 +103,10 @@ export default function DetailKlaimPage() {
 
   const alertCfg = getAlertConfig();
 
-  // Format Tanggal
   const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   const handleDelete = async () => {
@@ -137,176 +125,196 @@ export default function DetailKlaimPage() {
 
   return (
     <div className="max-w-6xl mx-auto py-2">
-      
+      {/* Tombol Kembali */}
       <Link 
         href="/riwayat-klaim" 
-        className="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-[#253E6B] transition mb-6"
+        className="inline-flex items-center text-xs font-semibold text-gray-500 hover:text-[#1E3A8A] transition mb-5"
       >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
         </svg>
         Kembali ke Riwayat Klaim
       </Link>
 
-      {/* Header Info */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6">
+      {/* Header Info & Action Buttons */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-[32px] font-extrabold text-[#253E6B] mb-2 tracking-tight">Detail Hasil Klaim</h1>
-          <div className="flex items-center text-[13.5px] text-gray-500 font-medium tracking-wide">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#1E293B] mb-1.5 tracking-tight">Detail Hasil Klaim</h1>
+          <div className="flex items-center text-xs text-gray-400 font-medium space-x-2">
             <span>ID Klaim #CLM-{claim.id}</span>
-            <span className="mx-2.5">•</span>
+            <span>•</span>
             <span>Diajukan pada {formatDate(claim.created_at)}</span>
           </div>
         </div>
         
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-[13px] font-bold hover:bg-red-50 transition flex items-center shadow-sm"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            Hapus
-          </button>
-          <button className="px-4 py-2 bg-white border border-gray-300 text-[#253E6B] rounded-lg text-[13px] font-bold hover:bg-gray-50 transition flex items-center shadow-sm">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+        <div className="flex items-center gap-2.5">
+          <button className="px-3.5 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-50 transition flex items-center gap-2 shadow-sm">
+            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
             Simpan Artikel
           </button>
-          <button className="px-4 py-2 bg-white border border-gray-300 text-[#253E6B] rounded-lg text-[13px] font-bold hover:bg-gray-50 transition flex items-center shadow-sm">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+
+          <button className="px-3.5 py-2 bg-white border border-gray-200 text-red-600 rounded-xl text-xs font-bold hover:bg-red-50 transition flex items-center gap-2 shadow-sm">
+            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
             Unduh PDF
           </button>
-          <button className="px-5 py-2 bg-[#0A1B3F] border border-[#0A1B3F] text-white rounded-lg text-[13px] font-bold hover:bg-[#152a5a] transition flex items-center shadow-sm">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+
+          <button className="px-4 py-2 bg-[#0F172A] text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition flex items-center gap-2 shadow-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
             Bagikan
+          </button>
+
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-2 text-gray-400 hover:text-red-600 rounded-lg transition"
+            title="Hapus Klaim"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* KONTEN KIRI */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Kotak Topik & Detail Klaim */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-7 shadow-sm">
-            <div className="flex justify-between items-start mb-3">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">TOPIK / KLAIM DIAJUKAN</p>
-              {renderBadge()}
-            </div>
-            <h2 className="text-[20px] font-bold text-slate-800 mb-3 leading-relaxed">
-              {claim.text}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Kolom Kiri */}
+        <div className="lg:col-span-2 space-y-5">
+          {/* Kutipan Klaim */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+              KUTIPAN KLAIM
+            </p>
+            <h2 className="text-lg md:text-xl font-bold text-[#1E293B] italic mb-3 leading-snug">
+              "{claim.text}"
             </h2>
             {claim.detail && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">DETAIL TAMBAHAN</p>
-                <p className="text-[14px] text-slate-600 leading-relaxed whitespace-pre-line">{claim.detail}</p>
-              </div>
+              <p className="text-xs text-gray-400">
+                Sumber: {claim.detail}
+              </p>
             )}
           </div>
 
-          {/* Kotak Alert Hasil */}
-          <div className={`${alertCfg.bg} rounded-xl border ${alertCfg.border} p-6 flex items-start space-x-4 shadow-sm`}>
-            <div className="mt-1 shrink-0">
-              <div className={`w-6 h-6 ${alertCfg.iconBg} rounded-full flex items-center justify-center text-white shadow-sm`}>
-                {alertCfg.iconType === 'pending' ? (
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                ) : alertCfg.iconType === 'hoax' ? (
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-                ) : (
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                )}
-              </div>
+          {/* Banner Status Hasil (Dynamic) */}
+          <div className={`${alertCfg.bg} rounded-2xl p-6 flex items-start gap-4 shadow-sm`}>
+            <div className={`w-7 h-7 ${alertCfg.iconBg} rounded-full flex items-center justify-center text-white shrink-0 mt-0.5`}>
+              {alertCfg.iconType === 'hoax' ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+              ) : alertCfg.iconType === 'pending' ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              )}
             </div>
             <div>
-              <h3 className={`text-[15px] font-extrabold ${alertCfg.textTitle} mb-2 uppercase tracking-wide`}>{alertCfg.title}</h3>
-              <p className={`text-[14px] ${alertCfg.textDesc} leading-relaxed font-medium`}>
+              <h3 className={`text-sm font-extrabold ${alertCfg.textTitle} mb-1.5 uppercase tracking-wide`}>
+                {alertCfg.title}
+              </h3>
+              <p className={`text-xs md:text-sm ${alertCfg.textDesc} leading-relaxed font-medium`}>
                 {alertCfg.desc}
               </p>
             </div>
           </div>
 
-          {/* Penjelasan Pakar (Review Note) jika sudah direview */}
-          {isReviewed && claim.review_note && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm">
-              <div className="flex items-center space-x-3 mb-6 pb-5 border-b border-gray-100">
-                <svg className="w-5 h-5 text-[#253E6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-                <h3 className="text-[18px] font-bold text-[#253E6B]">Penjelasan Lengkap Pakar Medis</h3>
+          {/* Penjelasan Lengkap Pakar Medis (Dynamic jika ada) */}
+          {claim.review_note && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm">
+              <div className="flex items-center gap-2.5 mb-5 pb-4 border-b border-gray-100">
+                <svg className="w-5 h-5 text-[#1E3A8A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+                <h3 className="text-base font-bold text-[#1E293B]">Penjelasan Lengkap Pakar Medis</h3>
               </div>
-              <div className="text-[14.5px] text-slate-600 leading-loose whitespace-pre-line">
+              <div className="text-xs md:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                 {claim.review_note}
               </div>
             </div>
           )}
         </div>
 
-        {/* KONTEN KANAN (Reviewer & Bukti/Evidence dari Database) */}
-        <div className="lg:col-span-1 space-y-6">
-          
-          {/* Info Reviewer */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-5">DIVALIDASI OLEH</p>
+        {/* Kolom Kanan */}
+        <div className="lg:col-span-1 space-y-5">
+          {/* Info Reviewer (Dynamic) */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+              DIVERIFIKASI OLEH
+            </p>
             {isAutoTervalidasi || isAutoKeliru ? (
-              <>
-                <div className="flex items-start space-x-4 mb-5">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 shrink-0 overflow-hidden border border-emerald-200 flex items-center justify-center font-bold text-emerald-700">
+              <div>
+                <div className="flex items-start gap-3.5 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 shrink-0 border border-emerald-200 flex items-center justify-center font-bold text-sm">
                     ✓
                   </div>
                   <div>
-                    <h4 className="text-[14px] font-bold text-[#0A1B3F] mb-1">Sistem MEDORA (Auto-validasi)</h4>
-                    <p className="text-[12px] text-gray-500 mb-2">Trust Score {trustAssessment?.trust_score?.toFixed(0) ?? '-'}% • {trustAssessment?.assessment ?? '-'}</p>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-[10.5px] font-bold border border-blue-100">
-                      Auto-validated
+                    <h4 className="text-sm font-bold text-[#1E293B] mb-0.5">Sistem MEDORA</h4>
+                    <p className="text-xs text-gray-400">Trust Score: {trustAssessment?.trust_score?.toFixed(0) ?? '-'}%</p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#E6F4EA] text-[#137333] rounded-full text-[10px] font-bold">
+                  ✓ Validasi Otomatis
+                </span>
+              </div>
+            ) : claim.reviewer ? (
+              <div>
+                <div className="flex items-start gap-3.5 mb-3">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 shrink-0 overflow-hidden border border-gray-200 flex items-center justify-center font-bold text-[#1E3A8A]">
+                    {claim.reviewer.avatar ? (
+                      <img src={claim.reviewer.avatar} alt={claim.reviewer.name} className="w-full h-full object-cover" />
+                    ) : (
+                      claim.reviewer.name?.charAt(0) || 'D'
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-[#1E293B] mb-0.5 leading-snug">
+                      {claim.reviewer.name}
+                    </h4>
+                    <p className="text-xs text-gray-400 mb-2">
+                      {claim.reviewer.speciality?.name || claim.reviewer.speciality || 'Tim Pakar Medis'}
+                    </p>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#E6F4EA] text-[#137333] rounded-full text-[10px] font-bold">
+                      ✓ Verified Reviewer
                     </span>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-gray-100">
-                  <p className="text-[12px] text-gray-500 font-medium">Status Review: <span className="text-emerald-700 font-bold ml-1">Tervalidasi Otomatis</span></p>
+                <div className="pt-3 border-t border-gray-100 text-xs text-gray-400">
+                  Tgl Verifikasi: {formatDate(claim.updated_at || claim.created_at)}
                 </div>
-              </>
+              </div>
             ) : (
-              <>
-                <div className="flex items-start space-x-4 mb-5">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 shrink-0 overflow-hidden border border-gray-200 flex items-center justify-center font-bold text-[#253E6B]">
-                    {claim.reviewer ? claim.reviewer.name.charAt(0) : 'M'}
-                  </div>
-                  <div>
-                    <h4 className="text-[14px] font-bold text-[#0A1B3F] mb-1">
-                      {claim.reviewer ? claim.reviewer.name : 'Menunggu Penugasan'}
-                    </h4>
-                    <p className="text-[12px] text-gray-500 mb-2">
-                      {claim.reviewer?.speciality ? claim.reviewer.speciality.name : 'Tim Pakar Medis Medora'}
-                    </p>
-                    {isReviewed && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10.5px] font-bold border border-emerald-100">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                        Verified Reviewer
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="pt-4 border-t border-gray-100">
-                  <p className="text-[12px] text-gray-500 font-medium">Status Review: <span className="text-slate-800 font-bold ml-1">{claim.status}</span></p>
-                </div>
-              </>
+              <p className="text-xs text-gray-400 italic">Menunggu penugasan pakar medis.</p>
             )}
           </div>
 
-          {/* Bukti Jurnal Ilmiah (Evidences dari relasi claimEvidences) */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-5">REFERENSI & BUKTI JURNAL</p>
+          {/* Referensi & Jurnal Terkait (Dynamic) */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-4 h-4 text-[#1E3A8A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                REFERENSI & JURNAL TERKAIT
+              </p>
+            </div>
+
             <div className="space-y-4">
               {!claim.claim_evidences || claim.claim_evidences.length === 0 ? (
-                <p className="text-xs text-gray-400 italic">Belum ada referensi jurnal terkait atau sistem sedang menganalisis.</p>
+                <p className="text-xs text-gray-400 italic">Belum ada referensi jurnal terkait.</p>
               ) : (
                 claim.claim_evidences.map((ce: any, idx: number) => (
-                  <div key={idx} className={`flex items-start space-x-3 ${idx !== 0 ? 'pt-4 border-t border-gray-100' : ''}`}>
-                    <svg className="w-5 h-5 text-[#253E6B] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  <div key={idx} className={`flex items-start gap-3 ${idx !== 0 ? 'pt-3 border-t border-gray-100' : ''}`}>
+                    <svg className="w-4 h-4 text-[#1E3A8A] shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                     <div>
-                      <h5 className="text-[12.5px] font-bold text-[#0A1B3F] mb-1.5 leading-snug">
+                      <h5 className="text-xs font-bold text-[#1E293B] mb-1 leading-snug">
                         {ce.evidence?.title || 'Jurnal Medis Terkait'}
                       </h5>
-                      <p className="text-[11.5px] text-gray-500 leading-relaxed line-clamp-2">
-                        {ce.evidence?.abstract || ce.relationship}
+                      <p className="text-[11px] text-gray-400 leading-relaxed line-clamp-3">
+                        {ce.evidence?.abstract || ce.relationship || ''}
                       </p>
                       {ce.evidence?.url && (
                         <a href={ce.evidence.url} target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-blue-600 hover:underline mt-1 inline-block">
@@ -319,49 +327,37 @@ export default function DetailKlaimPage() {
               )}
             </div>
           </div>
-
         </div>
-
       </div>
 
       {/* Modal Konfirmasi Hapus */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
-          <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 md:p-7">
+          <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
               <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <h3 className="text-[18px] font-bold text-[#0A1B3F] text-center mb-2">Hapus Klaim?</h3>
-            <p className="text-[14px] text-gray-500 text-center leading-relaxed mb-6">
-              Klaim <span className="font-bold text-gray-700">#CLM-{claim.id}</span> akan dihapus permanen beserta data analisisnya. Tindakan ini tidak dapat dibatalkan.
+            <h3 className="text-lg font-bold text-[#1E293B] text-center mb-2">Hapus Klaim?</h3>
+            <p className="text-sm text-gray-500 text-center leading-relaxed mb-6">
+              Klaim <span className="font-bold text-gray-700">#CLM-{claim.id}</span> akan dihapus permanen.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="flex-1 px-5 py-2.5 border border-gray-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 border border-gray-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-gray-50 transition disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="flex-1 px-5 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition disabled:opacity-50"
               >
-                {isDeleting ? (
-                  <>
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    Menghapus...
-                  </>
-                ) : (
-                  'Ya, Hapus'
-                )}
+                {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
               </button>
             </div>
           </div>

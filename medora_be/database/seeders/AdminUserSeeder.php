@@ -15,7 +15,18 @@ class AdminUserSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin@medora.com'],
             [
-                'name' => 'reviewer1',
+                'name' => 'admin',
+                'password' => Hash::make('password'),
+                'role' => Role::ADMIN,
+                'provider' => 'email',
+                'status' => ReviewerStatus::APPROVED,
+                'email_verified_at' => now(),
+            ]
+        );
+        User::firstOrCreate(
+            ['email' => 'reviewer@medora.com'],
+            [
+                'name' => 'reviewer',
                 'password' => Hash::make('password'),
                 'role' => Role::REVIEWER,
                 'provider' => 'email',
