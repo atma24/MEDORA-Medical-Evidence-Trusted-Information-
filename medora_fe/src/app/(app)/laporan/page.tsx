@@ -505,13 +505,12 @@ export default function LaporanAnalitikPage() {
               <tr className="border-b border-gray-200 text-[11px] font-bold text-slate-500 uppercase tracking-widest bg-white">
                 <th className="px-6 py-4">TOPIK KLAIM</th>
                 <th className="px-6 py-4">JUMLAH KLAIM</th>
-                <th className="px-6 py-4">TREN</th>
               </tr>
             </thead>
             <tbody className="text-[13.5px] text-slate-700">
               {(report?.top_topics ?? []).length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-10 text-center text-gray-400 font-medium">
+                  <td colSpan={2} className="px-6 py-10 text-center text-gray-400 font-medium">
                     Belum ada klaim pada periode {filterOption.toLowerCase()}.
                   </td>
                 </tr>
@@ -520,11 +519,6 @@ export default function LaporanAnalitikPage() {
                   <tr key={idx} className={`transition hover:bg-gray-50/50 ${idx < (report?.top_topics.length ?? 0) - 1 ? 'border-b border-gray-100' : ''}`}>
                     <td className="px-6 py-5 font-bold text-slate-800">{topic.topic}</td>
                     <td className="px-6 py-5 text-gray-500 font-medium">{formatNumber(topic.count)} klaim</td>
-                    <td className="px-6 py-5">
-                      <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-md ${topic.growth_pct >= 0 ? 'bg-red-100 text-red-700' : 'bg-[#EEF2FF] text-[#1E3A8A]'}`}>
-                        {topic.growth_pct >= 0 ? '+' : ''}{topic.growth_pct.toString().replace('.', ',')}%
-                      </span>
-                    </td>
                   </tr>
                 ))
               )}

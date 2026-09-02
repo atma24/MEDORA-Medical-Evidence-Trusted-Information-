@@ -32,8 +32,10 @@ class ReviewController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $menunggu = Claim::where('status', ClaimStatus::REVIEW_NEEDED)->count();
-        $terverifikasi = Claim::where('status', ClaimStatus::REVIEWED)
-            ->where('review_verdict', 'FACT')->count();
+        $terverifikasi = Claim::where(function ($q) {
+            $q->where('status', ClaimStatus::REVIEWED)
+              ->where('review_verdict', 'FACT');
+        })->orWhere('status', ClaimStatus::ANALYZED)->count();
         $keliru = Claim::where('status', ClaimStatus::REVIEWED)
             ->where('review_verdict', 'HOAX')->count();
 
@@ -45,16 +47,13 @@ class ReviewController extends Controller
     }
 
     /**
-     * History klaim yang sudah direview oleh reviewer yang login (B1).
-     * Tab Selesai harus menampilkan ini, Tab Semua = queue + history.
+     * History klaim yang sudah selesai: direview oleh reviewer ATAU di-auto-validasi ML (B1).
+     * Tab Selesai menampilkan semua klaim selesai, Tab Semua = queue + history.
      */
     public function history(Request $request): JsonResponse
     {
-        $userId = $request->user()->id;
-
         return response()->json(
-            Claim::where('status', ClaimStatus::REVIEWED)
-                ->where('reviewed_by', $userId)
+            Claim::whereIn('status', [ClaimStatus::REVIEWED, ClaimStatus::ANALYZED])
                 ->with(['user', 'trustAssessment', 'claimEvidences.evidence'])
                 ->orderByDesc('updated_at')
                 ->get()
@@ -91,13 +90,15 @@ class ReviewController extends Controller
         $totalClaims = Claim::whereBetween('created_at', [$start, $end])->count();
         $prevTotalClaims = Claim::whereBetween('created_at', [$prevStart, $prevEnd])->count();
         
-        // Klaim selesai (REVIEWED)
-        $completedClaims = Claim::where('status', ClaimStatus::REVIEWED)
-            ->whereBetween('created_at', [$start, $end])
-            ->count();
-        $prevCompletedClaims = Claim::where('status', ClaimStatus::REVIEWED)
-            ->whereBetween('created_at', [$prevStart, $prevEnd])
-            ->count();
+        // Klaim selesai (REVIEWED + ANALYZED)
+        $completedClaims = Claim::where(function ($q) use ($start, $end) {
+            $q->where('status', ClaimStatus::REVIEWED)
+              ->orWhere('status', ClaimStatus::ANALYZED);
+        })->whereBetween('created_at', [$start, $end])->count();
+        $prevCompletedClaims = Claim::where(function ($q) use ($prevStart, $prevEnd) {
+            $q->where('status', ClaimStatus::REVIEWED)
+              ->orWhere('status', ClaimStatus::ANALYZED);
+        })->whereBetween('created_at', [$prevStart, $prevEnd])->count();
         
         // Antrean aktif (REVIEW_NEEDED saat ini - tidak bergantung periode filter)
         $activeQueue = Claim::where('status', ClaimStatus::REVIEW_NEEDED)->count();
@@ -189,8 +190,12 @@ class ReviewController extends Controller
         
         // --- Distribusi Status ---
         $factCount = Claim::whereBetween('created_at', [$start, $end])
-            ->where('status', ClaimStatus::REVIEWED)
-            ->where('review_verdict', 'FACT')
+            ->where(function ($q) {
+                $q->where(function ($q2) {
+                    $q2->where('status', ClaimStatus::REVIEWED)
+                       ->where('review_verdict', 'FACT');
+                })->orWhere('status', ClaimStatus::ANALYZED);
+            })
             ->count();
             
         $hoaxCount = Claim::whereBetween('created_at', [$start, $end])
@@ -279,8 +284,14 @@ class ReviewController extends Controller
 
         $totalClaims = Claim::whereBetween('created_at', [$start, $end])->count();
         $prevTotalClaims = Claim::whereBetween('created_at', [$prevStart, $prevEnd])->count();
-        $completedClaims = Claim::where('status', ClaimStatus::REVIEWED)->whereBetween('created_at', [$start, $end])->count();
-        $prevCompletedClaims = Claim::where('status', ClaimStatus::REVIEWED)->whereBetween('created_at', [$prevStart, $prevEnd])->count();
+        $completedClaims = Claim::where(function ($q) use ($start, $end) {
+            $q->where('status', ClaimStatus::REVIEWED)
+              ->orWhere('status', ClaimStatus::ANALYZED);
+        })->whereBetween('created_at', [$start, $end])->count();
+        $prevCompletedClaims = Claim::where(function ($q) use ($prevStart, $prevEnd) {
+            $q->where('status', ClaimStatus::REVIEWED)
+              ->orWhere('status', ClaimStatus::ANALYZED);
+        })->whereBetween('created_at', [$prevStart, $prevEnd])->count();
         $activeQueue = Claim::where('status', ClaimStatus::REVIEW_NEEDED)->count();
         $reviewedClaims = Claim::where('status', ClaimStatus::REVIEWED)->whereBetween('created_at', [$start, $end])->get(['created_at','updated_at']);
         $avgResponseMinutes = null;
@@ -312,7 +323,11 @@ class ReviewController extends Controller
         $trend=array_map(fn($l,$c)=>['label'=>$l,'value'=>$c],$labels,$counts);
         $trendTitle = match($period){ 'today'=>'Per Jam','week'=>'Mingguan','year'=>'Bulanan', default=>'Harian' };
 
-        $factCount=Claim::whereBetween('created_at',[$start,$end])->where('status',ClaimStatus::REVIEWED)->where('review_verdict','FACT')->count();
+        $factCount=Claim::whereBetween('created_at',[$start,$end])->where(function ($q) {
+            $q->where(function ($q2) {
+                $q2->where('status', ClaimStatus::REVIEWED)->where('review_verdict','FACT');
+            })->orWhere('status', ClaimStatus::ANALYZED);
+        })->count();
         $hoaxCount=Claim::whereBetween('created_at',[$start,$end])->where('status',ClaimStatus::REVIEWED)->where('review_verdict','HOAX')->count();
         $otherCount=max(0,$totalClaims-$factCount-$hoaxCount);
         $totalDist=$totalClaims?:1;

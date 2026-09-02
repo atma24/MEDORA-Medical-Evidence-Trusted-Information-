@@ -76,8 +76,8 @@ export default function AntreanKlaimPage() {
 
   // 3. Logika Sorting - sort by created_at for queue, updated_at for finished
   const getSortDate = (c: Claim) => {
-    // Untuk REVIEWED pakai updated_at, lainnya created_at
-    const d = c.status === 'REVIEWED' ? c.updated_at : c.created_at;
+    // Untuk REVIEWED/ANALYZED pakai updated_at, lainnya created_at
+    const d = (c.status === 'REVIEWED' || c.status === 'ANALYZED') ? c.updated_at : c.created_at;
     return new Date(d).getTime();
   };
   const sortedByDateDesc = [...filteredByTab].sort((a, b) => getSortDate(b) - getSortDate(a));
@@ -111,6 +111,13 @@ export default function AntreanKlaimPage() {
 
   // Helper badge status
   const renderBadge = (claim: Claim) => {
+    if (claim.status === 'ANALYZED') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#E6F7F1] text-[#008053] rounded-md text-[11px] font-semibold">
+          <IconTervalidasiStatus className="w-3.5 h-3.5" /> Tervalidasi
+        </span>
+      );
+    }
     if (claim.status === 'REVIEWED' && claim.review_verdict === 'FACT') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#E6F7F1] text-[#008053] rounded-md text-[11px] font-semibold">
@@ -133,7 +140,7 @@ export default function AntreanKlaimPage() {
   };
 
   const renderAction = (claim: Claim) => {
-    const isReviewed = claim.status === 'REVIEWED';
+    const isReviewed = claim.status === 'REVIEWED' || claim.status === 'ANALYZED';
     return (
       <Link 
         href={`/verifikasi/${claim.id}`}
@@ -149,7 +156,7 @@ export default function AntreanKlaimPage() {
   };
 
   const getEmptyMessage = () => {
-    if (activeTab === 'Selesai') return 'Belum ada klaim selesai yang Anda review.';
+    if (activeTab === 'Selesai') return 'Belum ada klaim yang selesai ditinjau.';
     if (activeTab === 'Menunggu Tinjauan') return 'Tidak ada antrean klaim yang perlu ditinjau.';
     return 'Belum ada klaim tersedia.';
   };
@@ -265,7 +272,7 @@ export default function AntreanKlaimPage() {
                 currentData.map((klaim) => (
                   <tr key={`${klaim.status}-${klaim.id}`} className="border-b border-gray-100 hover:bg-gray-50/50 transition">
                     <td className="px-6 py-6 font-bold text-[#0B1E46]">#CLM-{klaim.id}</td>
-                    <td className="px-6 py-6 text-gray-500 font-medium">{formatDate(klaim.status === 'REVIEWED' ? klaim.updated_at : klaim.created_at)}</td>
+                    <td className="px-6 py-6 text-gray-500 font-medium">{formatDate((klaim.status === 'REVIEWED' || klaim.status === 'ANALYZED') ? klaim.updated_at : klaim.created_at)}</td>
                     <td className="px-6 py-6">
                       <p className="font-semibold text-[#1E293B] mb-2 line-clamp-1">{klaim.text}</p>
                       {renderBadge(klaim)}

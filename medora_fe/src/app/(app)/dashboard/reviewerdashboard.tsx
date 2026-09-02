@@ -65,6 +65,13 @@ export default function ReviewerDashboard() {
 
   // Helper render status
   const renderStatusBadge = (claim: Claim) => {
+    if (claim.status === 'ANALYZED') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#E6F7F1] text-[#008053] rounded-full text-[11px] font-semibold">
+          <IconTervalidasiStatus className="w-3.5 h-3.5" /> Tervalidasi
+        </span>
+      );
+    }
     if (claim.status === 'REVIEWED' && claim.review_verdict === 'FACT') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#E6F7F1] text-[#008053] rounded-full text-[11px] font-semibold">
