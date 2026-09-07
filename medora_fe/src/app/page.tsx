@@ -235,7 +235,7 @@ export default function LandingPage() {
                                 </p>
                             </div>
                             <p className="text-[12.5px] text-gray-500 tracking-wide">
-                                Â© 2026 MEDORA by Nexora Team. Seluruh Hak Cipta Dilindungi.
+                                © 2026 MEDORA by Nexora Team. Seluruh Hak Cipta Dilindungi.
                             </p>
                         </div>
 
