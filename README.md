@@ -175,7 +175,6 @@ MEDORA directly contributes to the **Sustainable Development Goals (SDG 3): Good
 - **Automated Credentialing:** Integration with official hospital or government databases for real-time medical professional verification (STR/SIP).
 - **Interactive Chatbot:** AI-powered chatbot integration for instant preliminary responses to simple health queries before formal submission.
 - **Geospatial Analytics:** A dynamic heatmap feature to track the regional spread and trends of specific health hoaxes based on user submissions.
-- **Reviewer Gamification:** Implementing leaderboards and digital badges for medical experts to encourage active participation in validating claims.
 
 ---
 
