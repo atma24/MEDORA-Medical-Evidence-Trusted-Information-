@@ -5,10 +5,10 @@
 A smart, responsive web-based medical fact-checking platform that integrates **Artificial Intelligence (NLP)** with a **Human-in-the-Loop** approach to combat the spread of health hoaxes. Built for the **SwitchFest 2026** competition under the theme *"NextGen Secure: Building the Future of Trusted Web Ecosystems"*.
 
 [![SwitchFest 2026](https://img.shields.io/badge/SwitchFest-2026-blue.svg?style=for-the-badge)](#)
+[![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)](#)
 [![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](#)
 [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
 [![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](#)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](#)
 [![HuggingFace](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](#)
 
 ---
@@ -62,14 +62,16 @@ MEDORA implements strict Role-Based Access Control (RBAC) with dedicated workspa
 ## 🛠️ Tech Stack
 
 ### Web Core (Frontend & Backend)
+![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-### AI & NLP Microservice
+### AI, NLP & Data
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![HuggingFace](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
+![Kaggle](https://img.shields.io/badge/Kaggle-20BEFF?style=for-the-badge&logo=Kaggle&logoColor=white)
 
 ### Database, Design & Version Control
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
@@ -113,8 +115,12 @@ User views Transparent Result & Downloads PDF Report
                   [ Web Browser / Mobile ]
                              │
                              ▼
+                    [ Next.js Frontend ]
+                             │
+                             │ REST API
+                             ▼
                  [ Laravel Backend Core ] ─────────────┐
-                 (Auth, RBAC, User UI)                 │
+                 (Auth, RBAC, API Logic)               │
                              │                         │ REST API
                              ▼                         ▼
   [ MySQL Database ] ────────┘               [ Python AI Engine ]
@@ -148,10 +154,10 @@ This project was developed collaboratively by the **Nexora Team**, divided into 
 - Conducted user requirement analysis for the medical fact-checking flow.
 - Designed the complete User Interface (UI/UX) in Figma (Landing Page, User Dashboard, Reviewer Workspace, Admin Panel).
 - Developed the design system (typography, clinical color palette, reusable components).
-- Implemented the responsive web pages using HTML, Tailwind CSS, and Alpine.js.
+- Implemented the responsive web client using **Next.js** and React components.
 
 ### Abdul Rauf Fansuri (Back-End, Database, & AI Integration)
-- Developed the core system architecture using Laravel 11.
+- Developed the core system API architecture using Laravel 11.
 - Designed and managed the MySQL relational database schema (17 tables) to handle complex claim-evidence relationships.
 - Implemented strict Role-Based Access Control (RBAC) and credential verification logic.
 - Integrated the Python microservice and Hugging Face NLP for automated evidence extraction.
@@ -166,10 +172,10 @@ MEDORA directly contributes to the **Sustainable Development Goals (SDG 3): Good
 
 ## 🚀 Future Improvements
 
-- Integration with official hospital databases for automated credential checking.
-- Mobile Application version (Flutter/React Native).
-- Multilingual support for broader accessibility in Southeast Asia.
-- Chatbot integration for instant preliminary health queries.
+- **Automated Credentialing:** Integration with official hospital or government databases for real-time medical professional verification (STR/SIP).
+- **Interactive Chatbot:** AI-powered chatbot integration for instant preliminary responses to simple health queries before formal submission.
+- **Geospatial Analytics:** A dynamic heatmap feature to track the regional spread and trends of specific health hoaxes based on user submissions.
+- **Reviewer Gamification:** Implementing leaderboards and digital badges for medical experts to encourage active participation in validating claims.
 
 ---
 
