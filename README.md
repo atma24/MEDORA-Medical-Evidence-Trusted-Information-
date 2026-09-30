@@ -4,12 +4,18 @@
 
 A smart, responsive web-based medical fact-checking platform that integrates **Artificial Intelligence (NLP)** with a **Human-in-the-Loop** approach to combat the spread of health hoaxes. Built for the **SwitchFest 2026** competition under the theme *"NextGen Secure: Building the Future of Trusted Web Ecosystems"*.
 
+[![SwitchFest 2026](https://img.shields.io/badge/SwitchFest-2026-blue.svg?style=for-the-badge)](#)
+[![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](#)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](#)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](#)
+[![HuggingFace](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](#)
+
 ---
 
 ## 🌐 Live Demo & Repository
-
-* **Live Application:** <https://app.medorahealth.cloud/>
-* **GitHub Repository:** <https://github.com/atma24/MEDORA-Medical-Evidence-Trusted-Information->
+- **Live Application:** [https://app.medorahealth.cloud/](https://app.medorahealth.cloud/)
+- **GitHub Repository:** [https://github.com/atma24/MEDORA-Medical-Evidence-Trusted-Information-](https://github.com/atma24/MEDORA-Medical-Evidence-Trusted-Information-)
 
 ---
 
@@ -23,28 +29,9 @@ The system automates the extraction of health claims using NLP and searches for 
 
 ## 💡 Background (The Problem)
 
-* **Information Overload:** Social media accelerates the spread of unverified health hacks and medical hoaxes.
-* **Self-Diagnosis Risks:** Laypeople often misinterpret scientific jargon, leading to dangerous health decisions.
-* **Validation Bottleneck:** Medical professionals lack centralized tools to efficiently debunk viral myths with backed scientific evidence.
-
----
-
-## 🛠️ Tech Stack
-
-### Web Core (Frontend & Backend)
-![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
-![Alpine.js](https://img.shields.io/badge/Alpine.js-8BC0D0?style=for-the-badge&logo=alpine.js&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-
-### AI & NLP Microservice
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Hugging Face](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
-
-### Database, Design & Version Control
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)
-![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)
+- **Information Overload:** Social media accelerates the spread of unverified health hacks and medical hoaxes.
+- **Self-Diagnosis Risks:** Laypeople often misinterpret scientific jargon, leading to dangerous health decisions.
+- **Validation Bottleneck:** Medical professionals lack centralized tools to efficiently debunk viral myths with backed scientific evidence.
 
 ---
 
@@ -53,22 +40,41 @@ The system automates the extraction of health claims using NLP and searches for 
 MEDORA implements strict Role-Based Access Control (RBAC) with dedicated workspaces for three types of users:
 
 ### 👤 1. Public User Workspace
-* **Claim Submission:** Interactive form to submit doubtful health claims.
-* **Verification Tracking:** Real-time dashboard tracking claim status (*Pending, Validated*).
-* **Transparency Details:** View exact literature references (PubMed) and full explanations from medical experts.
-* **Account Security:** Profile management, customizable notifications, and Two-Factor Authentication (2FA).
+- **Claim Submission:** Interactive form to submit doubtful health claims.
+- **Verification Tracking:** Real-time dashboard tracking claim status (*Pending, Validated*).
+- **Transparency Details:** View exact literature references (PubMed) and full explanations from medical experts.
+- **Account Security:** Profile management, customizable notifications, and Two-Factor Authentication (2FA).
 
 ### 🩺 2. Medical Expert (Reviewer) Workspace
-* **Credential Validation:** Mandatory Medical Registration Number (STR / SIP) verification during registration.
-* **AI-Assisted Dashboard:** View NLP-extracted entities (Subject, Relation, Object) and algorithmic *Trust Scores*.
-* **Evidence Mapping:** Analyze automated journal references (Support, Contradict, Neutral).
-* **Medical Judgment:** Form to provide final verdicts (Fact, Partially True, Hoax) with detailed clinical explanations.
-* **Analytics & Trends:** Track review performance and discover trending health hoaxes.
+- **Credential Validation:** Mandatory Medical Registration Number (STR / SIP) verification during registration.
+- **AI-Assisted Dashboard:** View NLP-extracted entities (Subject, Relation, Object) and algorithmic *Trust Scores*.
+- **Evidence Mapping:** Analyze automated journal references (Support, Contradict, Neutral).
+- **Medical Judgment:** Form to provide final verdicts (Fact, Partially True, Hoax) with detailed clinical explanations.
+- **Analytics & Trends:** Track review performance and discover trending health hoaxes.
 
 ### 🛡 3. Administrator Workspace
-* **Central Dashboard:** Monitor total active users, pending claims, and platform metrics.
-* **Reviewer Approval System:** Manually verify and approve/reject medical expert credentials (STR validation).
-* **User Management:** Filter roles, manage account statuses, and perform hard-deletes.
+- **Central Dashboard:** Monitor total active users, pending claims, and platform metrics.
+- **Reviewer Approval System:** Manually verify and approve/reject medical expert credentials (STR validation).
+- **User Management:** Filter roles, manage account statuses, and perform hard-deletes.
+
+---
+
+## 🛠️ Tech Stack
+
+### Web Core (Frontend & Backend)
+![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+
+### AI & NLP Microservice
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![HuggingFace](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
+
+### Database, Design & Version Control
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)
+![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
 
 ---
 
@@ -126,29 +132,29 @@ User views Transparent Result & Downloads PDF Report
 
 The infrastructure is powered by a robust **MySQL** database consisting of 17 interconnected tables. Key tables include:
 
-* `users`: Manages authentication and multidimensional roles (`ADMIN`, `REVIEWER`, `USER`).
-* `claims`: Stores user submissions and AI NLP extraction results (`subject`, `relation`, `object`, `ml_confidence`).
-* `evidences`: Central repository for scientific literature (PubMed IDs, DOIs, abstracts, publication years).
-* `claim_evidences`: Maps the relationship validity between claims and evidence (`SUPPORT`, `CONTRADICT`, `NEUTRAL`).
-* `trust_assessments`: Records calculated trust scores and final evidence aggregates (supporting/contradicting counts).
+- `users`: Manages authentication and roles (`ADMIN`, `REVIEWER`, `USER`).
+- `claims`: Stores user submissions and AI NLP extraction results (Subject, Relation, Object, `ml_confidence`).
+- `evidences`: Central repository for scientific literature (PubMed IDs, DOIs, abstracts, publication years).
+- `claim_evidences`: Maps the relationship validity between claims and evidence (`SUPPORT`, `CONTRADICT`, `NEUTRAL`).
+- `trust_assessments`: Records calculated trust scores and final evidence aggregates.
 
 ---
 
 ## 🧑‍💻 Our Contributions
 
-This project was collaboratively developed by the **Nexora Team** for the SwitchFest 2026 competition.
+This project was developed collaboratively by the **Nexora Team**, divided into specific technical roles:
 
 ### Chesya Kinanti (Front-End & UI/UX Design)
-* Conducted user requirement analysis and established the system workflow.
-* Designed the complete User Interface (UI/UX) in Figma (User Dashboard, Reviewer Workspace, Admin Panel).
-* Developed the design system (typography, clinical color palette, reusable UI components).
-* Implemented the responsive front-end architecture using HTML, Tailwind CSS, and Alpine.js.
+- Conducted user requirement analysis for the medical fact-checking flow.
+- Designed the complete User Interface (UI/UX) in Figma (Landing Page, User Dashboard, Reviewer Workspace, Admin Panel).
+- Developed the design system (typography, clinical color palette, reusable components).
+- Implemented the responsive web pages using HTML, Tailwind CSS, and Alpine.js.
 
 ### Abdul Rauf Fansuri (Back-End, Database, & AI Integration)
-* Developed the core system architecture using Laravel 11.
-* Designed and managed the MySQL relational database schema (17 tables) for complex claim-evidence relationships.
-* Implemented strict Role-Based Access Control (RBAC) and security features (2FA).
-* Integrated the Python microservice and Hugging Face NLP for automated evidence extraction and trust assessment.
+- Developed the core system architecture using Laravel 11.
+- Designed and managed the MySQL relational database schema (17 tables) to handle complex claim-evidence relationships.
+- Implemented strict Role-Based Access Control (RBAC) and credential verification logic.
+- Integrated the Python microservice and Hugging Face NLP for automated evidence extraction.
 
 ---
 
@@ -158,14 +164,24 @@ MEDORA directly contributes to the **Sustainable Development Goals (SDG 3): Good
 
 ---
 
+## 🚀 Future Improvements
+
+- Integration with official hospital databases for automated credential checking.
+- Mobile Application version (Flutter/React Native).
+- Multilingual support for broader accessibility in Southeast Asia.
+- Chatbot integration for instant preliminary health queries.
+
+---
+
 ## 👨‍💻 Developers (Nexora Team)
 
-**Chesya Kinanti**
+**Chesya Kinanti**  
 *Front-End Developer & UI/UX Designer*
-* GitHub: <https://github.com/chesyakinanti>
+- GitHub: [https://github.com/chesyakinanti](https://github.com/chesyakinanti)
 
-**Abdul Rauf Fansuri**
-*Back-End Developer, Database, & AI Integration*
-* GitHub: <https://github.com/atma24>
+**Abdul Rauf Fansuri**  
+*Back-End Developer & AI Integration*
+- GitHub: [https://github.com/atma24](https://github.com/atma24)
 
+---
 *© 2026 MEDORA by Nexora Team. All Rights Reserved.*
