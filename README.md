@@ -1,164 +1,188 @@
-⚕️ MEDORA (Medical Evidence & Trusted Information)
+# ⚕ MEDORA (Medical Evidence & Trusted Information)
 
-"From Claims to Evidence. Building a Trusted Web Ecosystem for Health Information."
+> **"From Claims to Evidence: Building a Trusted Web Ecosystem for Health Information."**
 
-MEDORA is an innovative web-based fact-checking platform that integrates Machine Learning with a Human-in-the-Loop approach to combat the spread of medical misinformation and health hoaxes. Built for the SwitchFest 2026 competition under the theme "NextGen Secure: Building the Future of Trusted Web Ecosystems".
+A smart, responsive web-based medical fact-checking platform that integrates **Artificial Intelligence (NLP)** with a **Human-in-the-Loop** approach to combat the spread of health hoaxes. Built for the **SwitchFest 2026** competition under the theme *"NextGen Secure: Building the Future of Trusted Web Ecosystems"*.
+
+[![SwitchFest 2026](https://img.shields.io/badge/SwitchFest-2026-blue.svg?style=for-the-badge)](#)
+[![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](#)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](#)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](#)
+[![HuggingFace](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](#)
 
-📖 About the Project
+---
 
-In today's digital era, the public is highly vulnerable to false medical claims. MEDORA bridges the gap between laypeople seeking factual truth and medical practitioners acting as validators.
+## 🌐 Live Demo & Repository
+- **Live Application:** [https://app.medorahealth.cloud/](https://app.medorahealth.cloud/)
+- **GitHub Repository:** [https://github.com/atma24/MEDORA-Medical-Evidence-Trusted-Information-](https://github.com/atma24/MEDORA-Medical-Evidence-Trusted-Information-)
+
+---
+
+## 📖 Overview
+
+In today's digital era, the public is highly vulnerable to false medical claims and incorrect self-diagnoses. **MEDORA** bridges the gap between laypeople seeking factual truth and medical practitioners acting as validators.
+
+The system automates the extraction of health claims using NLP and searches for scientific literature from global repositories (like PubMed). However, to ensure absolute medical accuracy, the final validation is performed by verified medical professionals. This ecosystem guarantees a safe, clean, and trusted digital space for health information.
+
+---
+
+## 💡 Background (The Problem)
+
+- **Information Overload:** Social media accelerates the spread of unverified health hacks and medical hoaxes.
+- **Self-Diagnosis Risks:** Laypeople often misinterpret scientific jargon, leading to dangerous health decisions.
+- **Validation Bottleneck:** Medical professionals lack centralized tools to efficiently debunk viral myths with backed scientific evidence.
+
+---
+
+## ✨ Features by Role
+
+MEDORA implements strict Role-Based Access Control (RBAC) with dedicated workspaces for three types of users:
+
+### 👤 1. Public User Workspace
+- **Claim Submission:** Interactive form to submit doubtful health claims.
+- **Verification Tracking:** Real-time dashboard tracking claim status (*Pending, Validated*).
+- **Transparency Details:** View exact literature references (PubMed) and full explanations from medical experts.
+- **Account Security:** Profile management, customizable notifications, and Two-Factor Authentication (2FA).
+
+### 🩺 2. Medical Expert (Reviewer) Workspace
+- **Credential Validation:** Mandatory Medical Registration Number (STR / SIP) verification during registration.
+- **AI-Assisted Dashboard:** View NLP-extracted entities (Subject, Relation, Object) and algorithmic *Trust Scores*.
+- **Evidence Mapping:** Analyze automated journal references (Support, Contradict, Neutral).
+- **Medical Judgment:** Form to provide final verdicts (Fact, Partially True, Hoax) with detailed clinical explanations.
+- **Analytics & Trends:** Track review performance and discover trending health hoaxes.
+
+### 🛡 3. Administrator Workspace
+- **Central Dashboard:** Monitor total active users, pending claims, and platform metrics.
+- **Reviewer Approval System:** Manually verify and approve/reject medical expert credentials (STR validation).
+- **User Management:** Filter roles, manage account statuses, and perform hard-deletes.
+
+---
+
+## 🛠️ Tech Stack
+
+### Web Core (Frontend & Backend)
+![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Alpine.js](https://img.shields.io/badge/Alpine.js-8BC0D0?style=for-the-badge&logo=alpinedotjs&logoColor=white)
 
-The system automates the extraction of claims and searches for scientific literature from global repositories (like PubMed). However, to ensure absolute accuracy, the final validation is performed by verified medical professionals. This ecosystem guarantees a safe, clean, and trusted digital space for health information.
+### AI & NLP Microservice
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![HuggingFace](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
 
-🛠️ Tech Stack
+### Database, Design & Version Control
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)
+![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
 
-MEDORA is built using a modern, scalable architecture, dividing the web framework and the AI processing into dedicated services:
+---
 
-🌐 Frontend & Backend (Web Core)
+## ⚙️ System Workflow
 
-Framework: Laravel (PHP) - Handling routing, robust backend logic, and Role-Based Access Control.
+```text
+User 
+   │
+   ▼
+Submits Medical Claim (e.g., "Garlic cures COVID")
+   │
+   ▼
+Python AI Microservice (NLP Extraction)
+   │ ├── Extracts: Subject, Relation, Object
+   │ └── Fetches: PubMed Evidence & Generates Initial Trust Score
+   ▼
+Claim Status: "Pending Review"
+   │
+   ▼
+Verified Medical Expert (Reviewer)
+   │ ├── Reviews AI findings on Dashboard
+   │ ├── Validates Evidence (Support/Contradict)
+   │ └── Submits Final Medical Verdict
+   ▼
+Claim Status: "Resolved / Validated"
+   │
+   ▼
+User views Transparent Result & Downloads PDF Report
+```
 
-Styling: Tailwind CSS - For a clean, modern, and responsive user interface.
+---
 
-JavaScript: Vanilla JS / Alpine.js - For interactive UI elements and dynamic modals.
+## 🏗️ System Architecture
 
-🧠 Artificial Intelligence (NLP Engine)
+```text
+                  [ Web Browser / Mobile ]
+                             │
+                             ▼
+                 [ Laravel Backend Core ] ─────────────┐
+                 (Auth, RBAC, User UI)                 │
+                             │                         │ REST API
+                             ▼                         ▼
+  [ MySQL Database ] ────────┘               [ Python AI Engine ]
+  (17 Tables: Users,                         (Hugging Face NLP)
+   Claims, Evidences)                                  │
+                             ┌─────────────────────────┘
+                             ▼
+                 [ Global Medical Databases ]
+                     (PubMed, DOI APIs)
+```
 
-Language: Python 3.x
+---
 
-Framework: Flask / FastAPI - Serving as an independent microservice API for claim analysis.
+## 🗄️ Database Structure
 
-Models: Hugging Face Transformers - Used for NLP text extraction (Subject, Relation, Object) and relevance scoring (ml_confidence).
+The infrastructure is powered by a robust **MySQL** database consisting of 17 interconnected tables. Key tables include:
 
-🗄️ Database & Infrastructure
+- `users`: Manages authentication and roles (`ADMIN`, `REVIEWER`, `USER`).
+- `claims`: Stores user submissions and AI NLP extraction results (Subject, Relation, Object, `ml_confidence`).
+- `evidences`: Central repository for scientific literature (PubMed IDs, DOIs, abstracts, publication years).
+- `claim_evidences`: Maps the relationship validity between claims and evidence (`SUPPORT`, `CONTRADICT`, `NEUTRAL`).
+- `trust_assessments`: Records calculated trust scores and final evidence aggregates.
 
-Database: MySQL - Relational database with 17 highly optimized tables for fast queries and data integrity.
+---
 
-Version Control: Git & GitHub
+## 🧑‍💻 Our Contributions
 
-✨ Key Features
+This project was developed collaboratively by the **Nexora Team**, divided into specific technical roles:
 
-MEDORA uses a Role-Based Access Control (RBAC) system with three main user types:
+### Chesya Kinanti (Front-End & UI/UX Design)
+- Conducted user requirement analysis for the medical fact-checking flow.
+- Designed the complete User Interface (UI/UX) in Figma (Landing Page, User Dashboard, Reviewer Workspace, Admin Panel).
+- Developed the design system (typography, clinical color palette, reusable components).
+- Implemented the responsive web pages using HTML, Tailwind CSS, and Alpine.js.
 
-👤 1. User (Public)
+### Abdul Rauf Fansuri (Back-End, Database, & AI Integration)
+- Developed the core system architecture using Laravel 11.
+- Designed and managed the MySQL relational database schema (17 tables) to handle complex claim-evidence relationships.
+- Implemented strict Role-Based Access Control (RBAC) and credential verification logic.
+- Integrated the Python microservice and Hugging Face NLP for automated evidence extraction.
 
-Submit Claims: Users can input doubtful health claims or viral news.
+---
 
-Track Verification: Real-time tracking of claim status (Pending Review, Verified).
+## 🏆 SDGs Alignment
 
-Detailed Transparency: View the exact literature used and the doctor's final explanation.
+MEDORA directly contributes to the **Sustainable Development Goals (SDG 3): Good Health and Well-being**, by promoting digital health literacy, combating medical hoaxes, and protecting the public from the dangers of incorrect self-diagnosis.
 
-Security: 2FA authentication and profile management.
+---
 
-🩺 2. Reviewer (Medical Experts)
+## 🚀 Future Improvements
 
-Credential Verification: Must register using a valid Medical Registration Number (STR/SIP) verified by Admins.
+- Integration with official hospital databases for automated credential checking.
+- Mobile Application version (Flutter/React Native).
+- Multilingual support for broader accessibility in Southeast Asia.
+- Chatbot integration for instant preliminary health queries.
 
-AI-Assisted Workspace: View NLP-extracted entities (Subject, Relation, Object) and an initial Trust Score.
+---
 
-Literature Matching: Evaluate automated journal references (Support, Contradict, Neutral).
+## 👨‍💻 Developers (Nexora Team)
 
-Medical Judgment: Provide final verdicts (Fact, Partially True, Hoax) with detailed medical explanations.
+**Chesya Kinanti**  
+*Front-End Developer & UI/UX Designer*
+- GitHub: [https://github.com/chesyakinanti](https://github.com/chesyakinanti)
 
-🛡️️ 3. Administrator
+**Abdul Rauf Fansuri**  
+*Back-End Developer & AI Integration*
+- GitHub: [https://github.com/atma24](https://github.com/atma24)
 
-Central Dashboard: Monitor total claims, pending reviews, and active users.
-
-Reviewer Approval: Manually verify and approve/reject medical expert credentials.
-
-User Management: Handle account statuses and perform hard-deletes if necessary.
-
-⚙️ How It Works (The Workflow)
-
-Input: A user submits a medical claim (e.g., "Garlic cures COVID-19").
-
-AI Extraction & Search: The Python ML microservice breaks down the claim and fetches relevant scientific papers from global databases (e.g., PubMed).
-
-Mapping: The system maps the relationship between the claim and the evidence, generating an initial ml_confidence score in the database.
-
-Expert Review: A verified medical reviewer analyzes the AI's findings on their dashboard and writes a conclusive, easy-to-understand verdict.
-
-Result Publication: The user receives the verified fact, backed by science and expert opinion.
-
-🗄️ Database Architecture
-
-MEDORA is powered by a robust MySQL relational database consisting of 17 interconnected tables. Key tables include:
-
-users: Manages multi-dimensional authentication and roles (ADMIN, REVIEWER, USER).
-
-claims: Stores user submissions and AI NLP extraction results.
-
-evidences: Central repository for scientific literature (PubMed links, DOIs, abstracts).
-
-claim_evidences: Maps the relationship validity between claims and pieces of evidence.
-
-trust_assessments: Records calculated trust scores and final evidence aggregates.
-
-🚀 Getting Started
-
-To run the MEDORA project locally on your machine, follow these steps:
-
-Prerequisites
-
-PHP >= 8.1
-
-Composer
-
-Node.js & NPM
-
-MySQL Server
-
-Python 3.x (For the ML Service)
-
-Installation
-
-Clone the repository
-
-git clone https://github.com/yourusername/medora.git
-cd medora
-
-
-Backend Setup (Laravel)
-
-composer install
-cp .env.example .env
-php artisan key:generate
-
-
-Configure Database
-
-Create a MySQL database named db-medora.
-
-Update your .env file with your database credentials.
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=db-medora
-DB_USERNAME=root
-DB_PASSWORD=
-
-
-Run Migrations & Seeders
-
-php artisan migrate --seed
-
-
-Frontend Setup (Tailwind/Vite)
-
-npm install
-npm run build
-
-
-Start the Application
-
-php artisan serve
-
-
-The application will now be running at http://localhost:8000.
-
-🏆 SDGs Alignment
-
-MEDORA directly contributes to the Sustainable Development Goals (SDG 3): Good Health and Well-being, by promoting digital health literacy and protecting the public from the dangers of incorrect self-diagnosis.
-
-© 2026 MEDORA by Nexora Team. All Rights Reserved.
+---
+*© 2026 MEDORA by Nexora Team. All Rights Reserved.*
